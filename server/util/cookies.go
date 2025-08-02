@@ -36,6 +36,7 @@ func ClearSecureCookie(w http.ResponseWriter, name string) {
 		Path:  "/",
 		MaxAge: -1,
 		HttpOnly: true,
+		Secure: true,
 	}
 
 	if env == "production" {
