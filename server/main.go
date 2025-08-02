@@ -3,6 +3,9 @@ package main
 import (
 	"chat-application/db"
 	"chat-application/db/migrations"
+	handler "chat-application/internal/api/handler/user"
+	"chat-application/internal/repo/user"
+	"chat-application/internal/service/user"
 	"log"
 
 	"github.com/joho/godotenv"
@@ -30,6 +33,10 @@ func main(){
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
+	userRepo := repository.NewUserRepository(dbConn)
 	
+	userService := service.NewUserService(userRepo)
+
+	userHandler := handler.NewUserHandler(userService)
 
 }
