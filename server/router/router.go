@@ -12,6 +12,8 @@ func SetupRoutes() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{"http://localhost:3000", "https://yappin.chat"},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -20,6 +22,10 @@ func SetupRoutes() {
 		AllowCredentials: true,
 		MaxAge: 300,
 	}))
+
+	r.Route("/api/users", func(r chi.Router) {
+		
+	})
 
 	r.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
