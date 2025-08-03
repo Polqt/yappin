@@ -4,10 +4,13 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/cors"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 
 	userHandler "chat-application/internal/api/handler/user"
+
+	statsHandler "chat-application/internal/api/handler/stats"
+
 	authMiddleware "chat-application/middleware"
 )
 
@@ -37,12 +40,23 @@ func SetupRoutes(userHandler *userHandler.UserHandler) http.Handler {
 		})
 	})
 
-	r.Route("/api/stats", func(s chi.Router)  {
+	r.Route("/api/stats", func (s chi.Router)  {
 		s.Group(func(r chi.Router) {
 			r.Use(authMiddleware.JWTAuth)
+			r.Post("/checkin", statsHandler.CheckIn)
+			r.Post("/upvote", statsHandler.GivenUpvote)
+		})
+
+		s.Group(func(r chi.Router)  {
+			r.Use(authMiddleware.JWTAuth)
+			r.Get("/profile/{userID}", statsHandler.GetUserProfile)
 		})
 	})
 
+	r.Route("/ws", func(u chi.Router) {
+		u.Group(func(r chi.Router) {})
+	})
+	
 	r.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("OK"))
