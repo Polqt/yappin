@@ -1,11 +1,6 @@
 package service
 
 import (
-	"context"
-	"database/sql"
-	"fmt"
-	"log"
-	"time"
 
 	roomRepository "chat-application/internal/repo/room"
 	"chat-application/internal/service/topics"
@@ -18,11 +13,11 @@ type PinnedRoomsService struct {
 	websocketCore *websocket.Core
 }
 
-func NewPinnedRoomsService(db *sql.DB, websocketCore *websocket.Core) *PinnedRoomsService {
-	return &PinnedRoomsService{
-		roomRepo: roomRepository.NewRoomRepository(db),
-		topicsService: topics.NewTopicsService(),
-		websocketCore: websocketCore,
-	}
-}
+// func NewPinnedRoomsService(db *sql.DB, websocketCore *websocket.Core) *PinnedRoomsService {
+// 	return &PinnedRoomsService{
+// 		roomRepo: roomRepository.NewRoomRepository(db),
+// 		topicsService: topics.NewTopicsService(),
+// 		websocketCore: websocketCore,
+// 	}
+// }
 
