@@ -6,7 +6,8 @@ import (
 	"net/http"
 
 	"chat-application/internal/api/model"
-	"chat-application/internal/service/user"
+	service "chat-application/internal/service/user"
+	"chat-application/middleware"
 	"chat-application/util"
 )
 
@@ -39,15 +40,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("CreateUser - Success: user created with ID=%s, username=%s", user.ID, user.Username)
 
-	http.SetCookie(w, &http.Cookie{
-		Name: "jwt",
-		Value: user.AccessToken,
-		Path: "/",
-		MaxAge: 60 * 60 * 24,
-		HttpOnly: true,
-		Secure: true,
-		SameSite: http.SameSiteLaxMode,
-	})
+	util.SetCookie(w, "jwt", user.AccessToken, 60*60*24) // 24 hours
 
 	util.WriteJSONResponse(w, http.StatusCreated, user)
 }
@@ -65,35 +58,18 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name: "jwt",
-		Value: user.AccessToken,
-		Path: "/",
-		MaxAge: 60 * 60 * 24,
-		HttpOnly: true,
-		Secure: true,
-		SameSite: http.SameSiteLaxMode,
-	})
+	util.SetCookie(w, "jwt", user.AccessToken, 60*60*24) // 24 hours
 
 	util.WriteJSONResponse(w, http.StatusOK, user)
 }
 
 func (h *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	http.SetCookie(w, &http.Cookie{
-		Name: "jwt",
-		Value: "",
-		Path: "/",
-		MaxAge: -1,
-		HttpOnly: true,
-		Secure: false,
-		SameSite: http.SameSiteLaxMode,
-	})
-
-	util.WriteJSONResponse(w, http.StatusOK, map[string]string{"message": "logout successfull"})
+	util.ClearSecureCookie(w, "jwt")
+	util.WriteJSONResponse(w, http.StatusOK, map[string]string{"message": "logout successful"})
 }
 
 func (h *UserHandler) UpdateUsername(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value("userID").(string)
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok {
 		util.WriteErrorResponse(w, http.StatusUnauthorized, "user not authenticated")
 		return
@@ -108,8 +84,10 @@ func (h *UserHandler) UpdateUsername(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(req.Username) < 3 || len(req.Username) > 20 {
-		util.WriteErrorResponse(w, http.StatusBadRequest, "username must between 3 and 20 characters")
+	req.Username = util.SanitizeString(req.Username)
+	
+	if err := util.ValidateUsername(req.Username); err != nil {
+		util.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 

@@ -1,13 +1,18 @@
 package middleware
 
 import (
-	"net/http"
 	"context"
 	"log"
+	"net/http"
 
 	"chat-application/util"
+
 	"github.com/golang-jwt/jwt/v5"
 )
+
+type ContextKey string
+
+const UserIDKey ContextKey = "userID"
 
 func JWTAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +32,12 @@ func JWTAuth(next http.Handler) http.Handler {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, jwt.ErrSignatureInvalid
 			}
-			return []byte(util.GetEnv("secretKey", "")), nil
+			secretKey := util.GetEnv("JWT_SECRET_KEY", "")
+			if secretKey == "" {
+				log.Println("JWT_SECRET_KEY is not set in environment variables")
+				return nil, jwt.ErrSignatureInvalid
+			}
+			return []byte(secretKey), nil
 		})
 
 		if err != nil || !token.Valid {
@@ -47,7 +57,7 @@ func JWTAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "userID", userID)
+		ctx := context.WithValue(r.Context(), UserIDKey, userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -69,7 +79,7 @@ func OptionalJWTAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		log.Printf("JWT cookie found, value: %s", cookie.Value)
+		log.Println("JWT cookie found")
 
 		token, err := jwt.Parse(cookie.Value, func(t *jwt.Token) (interface{}, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -77,9 +87,9 @@ func OptionalJWTAuth(next http.Handler) http.Handler {
 				return nil, jwt.ErrSignatureInvalid
 			}
 			
-			secretKey := util.GetEnv("secretKey", "")
+			secretKey := util.GetEnv("JWT_SECRET_KEY", "")
 			if secretKey == "" {
-				log.Println("Secret key is not set in environment variables")
+				log.Println("JWT_SECRET_KEY is not set in environment variables")
 				return nil, jwt.ErrSignatureInvalid
 			}
 
@@ -104,7 +114,7 @@ func OptionalJWTAuth(next http.Handler) http.Handler {
 			log.Printf("JWT claims: %v", claims)
 			if userID, ok := claims["id"].(string); ok {
 				log.Printf("Authenticated user ID: %s", userID)
-				ctx := context.WithValue(r.Context(), "userID", userID)
+				ctx := context.WithValue(r.Context(), UserIDKey, userID)
 				r = r.WithContext(ctx)
 			} else {
 				log.Printf("User ID not found in JWT claims")

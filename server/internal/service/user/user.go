@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"chat-application/internal/api/model"
-	"chat-application/internal/repo/user"
+	repository "chat-application/internal/repo/user"
 	"chat-application/util"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -39,14 +39,23 @@ func (s *UserService) CreateUser(ctx context.Context, req model.RequestCreateUse
 
 	log.Printf("UserService.CreateUser - Starting user creation for %s", req.Email)
 
-	if req.Username == "" || req.Email == "" || req.Password == "" {
-		log.Printf("UserService.CreateUser - Validation failed: missing required fields")
-		return nil, fmt.Errorf("username, email, and password are required")
+	// Validate and sanitize input
+	req.Username = util.SanitizeString(req.Username)
+	req.Email = util.SanitizeString(req.Email)
+	
+	if err := util.ValidateUsername(req.Username); err != nil {
+		log.Printf("UserService.CreateUser - Username validation failed: %v", err)
+		return nil, err
 	}
-
-	if len(req.Password) < 8 {
-		log.Printf("UserService.CreateUser - Validation failed: password too short")
-		return nil, fmt.Errorf("password must be at least 8 characters")
+	
+	if err := util.ValidateEmail(req.Email); err != nil {
+		log.Printf("UserService.CreateUser - Email validation failed: %v", err)
+		return nil, err
+	}
+	
+	if err := util.ValidatePassword(req.Password); err != nil {
+		log.Printf("UserService.CreateUser - Password validation failed: %v", err)
+		return nil, err
 	}
 
 	hashedPassword, err := util.HashPassword(req.Password)
@@ -81,7 +90,11 @@ func (s *UserService) CreateUser(ctx context.Context, req model.RequestCreateUse
 		},
 	})
 
-	secretKey := util.GetEnv("secretKey", "")
+	secretKey := util.GetEnv("JWT_SECRET_KEY", "")
+	if secretKey == "" {
+		log.Printf("UserService.CreateUser - JWT_SECRET_KEY not set")
+		return nil, fmt.Errorf("server configuration error")
+	}
 	ss, err := token.SignedString([]byte(secretKey))
 	if err != nil {
 		return nil, err
@@ -99,6 +112,19 @@ func (s *UserService) Login(ctx context.Context, req model.RequestLoginUser) (*m
 	defer cancel()
 
 	log.Printf("UserService.Login - Starting login attempt for email: %s", req.Email)
+
+	// Validate and sanitize input
+	req.Email = util.SanitizeString(req.Email)
+	
+	if err := util.ValidateEmail(req.Email); err != nil {
+		log.Printf("UserService.Login - Email validation failed: %v", err)
+		return nil, fmt.Errorf("invalid email or password")
+	}
+
+	if req.Password == "" {
+		log.Printf("UserService.Login - Password is empty")
+		return nil, fmt.Errorf("invalid email or password")
+	}
 
 	user, err := s.userRepo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
@@ -133,7 +159,11 @@ func (s *UserService) Login(ctx context.Context, req model.RequestLoginUser) (*m
 		},
 	})
 
-	secretKey := util.GetEnv("secretKey", "")
+	secretKey := util.GetEnv("JWT_SECRET_KEY", "")
+	if secretKey == "" {
+		log.Printf("UserService.Login - JWT_SECRET_KEY not set")
+		return nil, fmt.Errorf("server configuration error")
+	}
 
 	ss, err := token.SignedString([]byte(secretKey))
 	if err != nil {
