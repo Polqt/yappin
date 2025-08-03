@@ -11,10 +11,12 @@ import (
 
 	userHandler "chat-application/internal/api/handler/user"
 	userRepo "chat-application/internal/repo/user"
-	statsService "chat-application/internal/service/stats"
 	userService "chat-application/internal/service/user"
 
 	statsRepo "chat-application/internal/repo/stats"
+	statsService "chat-application/internal/service/stats"
+	statsHandler "chat-application/internal/api/handler/stats"
+
 	"chat-application/router"
 )
 
@@ -47,10 +49,10 @@ func main(){
 	statsService := statsService.NewStatsService(statsRepository)
 
 	userHandler := userHandler.NewUserHandler(userService)
-	
+	statsHandler := statsHandler.NewStatsHandler(statsService)
 
 	// router := router.SetupRoutes(userHandler)
-	router := router.SetupRoutes(userHandler)
+	router := router.SetupRoutes(userHandler, statsHandler)
 	if err := http.ListenAndServe(":8080", router); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
