@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 
 	statsService "chat-application/internal/service/stats"
 	"chat-application/util"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -20,7 +22,7 @@ func NewStatsHandler(statsService *statsService.StatsService) *StatsHandler {
 	}
 }
 
-func(h *StatsHandler) CheckIn(w http.ResponseWriter, r *http.Request) {
+func (h *StatsHandler) CheckIn(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	userIDString, ok := ctx.Value("userID").(string)
@@ -47,6 +49,69 @@ func(h *StatsHandler) CheckIn(w http.ResponseWriter, r *http.Request) {
 	util.WriteJSONResponse(w, http.StatusOK, result)
 }
 
-func(h *StatsHandler) GetUserProfile(w http.ResponseWriter, r *http.Request) {
+func (h *StatsHandler) GetUserProfile(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
+	targetUserIDString := chi.URLParam(r, "userID")
+	tagetUserID, err := uuid.Parse(targetUserIDString)
+	if err != nil {
+		util.WriteErrorResponse(w, http.StatusBadRequest, "invalid user ID format")
+		return
+	}
+
+	viewerUserID := uuid.Nil
+	if viewerIDString, ok := ctx.Value("userID").(string); ok {
+		if viewerID, err := uuid.Parse(viewerIDString); err == nil {
+			viewerUserID = viewerID
+		}
+	}
+
+	profile, err := h.statsService.GetUserProfile(ctx, tagetUserID, viewerUserID)
+	if err != nil {
+		log.Printf("Error retrieving user profile for user %s: %v", tagetUserID, err)
+		util.WriteErrorResponse(w, http.StatusInternalServerError, "failed to retrieve user profile")
+	}
+
+	util.WriteJSONResponse(w, http.StatusOK, profile)
+}
+
+func (h *StatsHandler) GiveUpvote(w http.ResponseWriter, r *http.Request)  {
+	ctx := r.Context()
+	
+	fromUserIDString, ok := ctx.Value("userID").(string)
+	if !ok {
+		util.WriteErrorResponse(w, http.StatusUnauthorized, "user not authenticated")
+		return 
+	}
+
+	fromUserID, err := uuid.Parse(fromUserIDString)
+	if err != nil {
+		util.WriteErrorResponse(w, http.StatusBadRequest, "invalid user ID format")
+		return
+	}
+
+	var req struct {
+		ToUserID string `json:"to_user_id"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		util.WriteErrorResponse(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	toUserID, err := uuid.Parse(req.ToUserID)
+	if err != nil {
+		util.WriteErrorResponse(w, http.StatusBadRequest, "invalid to_user_id format")
+		return
+	}
+
+	log.Printf("User %s is giving an upvote to user %s", fromUserIDString, req.ToUserID)
+
+	err = h.statsService.GivenUpvote(ctx, fromUserID, toUserID)
+	if err != nil {
+		util.WriteErrorResponse(w, http.StatusInternalServerError, "failed to give upvote")
+		return
+	}
+
+	util.WriteJSONResponse(w, http.StatusOK, map[string]string{"status": "upvote given successfully"})
 }
