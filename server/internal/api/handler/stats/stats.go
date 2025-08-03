@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	statsService "chat-application/internal/service/stats"
+	"chat-application/middleware"
 	"chat-application/util"
 
 	"github.com/go-chi/chi/v5"
@@ -25,7 +26,7 @@ func NewStatsHandler(statsService *statsService.StatsService) *StatsHandler {
 func (h *StatsHandler) CheckIn(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	userIDString, ok := ctx.Value("userID").(string)
+	userIDString, ok := ctx.Value(middleware.UserIDKey).(string)
 	if !ok {
 		util.WriteErrorResponse(w, http.StatusUnauthorized, "user not authenticated")
 		return 
@@ -60,7 +61,7 @@ func (h *StatsHandler) GetUserProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	viewerUserID := uuid.Nil
-	if viewerIDString, ok := ctx.Value("userID").(string); ok {
+	if viewerIDString, ok := ctx.Value(middleware.UserIDKey).(string); ok {
 		if viewerID, err := uuid.Parse(viewerIDString); err == nil {
 			viewerUserID = viewerID
 		}
@@ -78,7 +79,7 @@ func (h *StatsHandler) GetUserProfile(w http.ResponseWriter, r *http.Request) {
 func (h *StatsHandler) GiveUpvote(w http.ResponseWriter, r *http.Request)  {
 	ctx := r.Context()
 	
-	fromUserIDString, ok := ctx.Value("userID").(string)
+	fromUserIDString, ok := ctx.Value(middleware.UserIDKey).(string)
 	if !ok {
 		util.WriteErrorResponse(w, http.StatusUnauthorized, "user not authenticated")
 		return 
