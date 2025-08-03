@@ -113,7 +113,6 @@ func (s *UserService) Login(ctx context.Context, req model.RequestLoginUser) (*m
 
 	log.Printf("UserService.Login - Starting login attempt for email: %s", req.Email)
 
-	// Validate and sanitize input
 	req.Email = util.SanitizeString(req.Email)
 	
 	if err := util.ValidateEmail(req.Email); err != nil {
