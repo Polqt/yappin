@@ -16,9 +16,8 @@ import (
 func SetupRoutes(userHandler *userHandler.UserHandler, statsHandler *statsHandler.StatsHandler) http.Handler {
 	r := chi.NewRouter()
 	
-	// Security middleware
 	r.Use(authMiddleware.SecurityHeaders)
-	r.Use(authMiddleware.RequestSizeLimit(1 << 20)) // 1MB limit
+	r.Use(authMiddleware.RequestSizeLimit(1 << 20)) 
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.RequestID)
@@ -34,15 +33,13 @@ func SetupRoutes(userHandler *userHandler.UserHandler, statsHandler *statsHandle
 		MaxAge: 300,
 	}))
 
-	// API routes with rate limiting
 	r.Route("/api", func(api chi.Router) {
-		api.Use(authMiddleware.RateLimiter(100)) // 100 requests per minute
+		api.Use(authMiddleware.RateLimiter(100))
 		api.Use(authMiddleware.ContentTypeJSON)
 		
 		api.Route("/users", func(u chi.Router) {
-			// Public endpoints with stricter rate limiting
 			u.Group(func(r chi.Router) {
-				r.Use(authMiddleware.RateLimiter(10)) // 10 requests per minute for auth endpoints
+				r.Use(authMiddleware.RateLimiter(10))
 				r.Post("/sign-up", userHandler.CreateUser)
 				r.Post("/login", userHandler.Login)
 			})
@@ -59,7 +56,7 @@ func SetupRoutes(userHandler *userHandler.UserHandler, statsHandler *statsHandle
 			s.Group(func(r chi.Router) {
 				r.Use(authMiddleware.JWTAuth)
 				r.Post("/checkin", statsHandler.CheckIn)
-				r.Post("/upvote", statsHandler.GiveUpvote)
+				r.Post("/upvote", statsHandler.GivenUpvote)
 			})
 
 			s.Group(func(r chi.Router)  {

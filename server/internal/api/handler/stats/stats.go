@@ -76,7 +76,7 @@ func (h *StatsHandler) GetUserProfile(w http.ResponseWriter, r *http.Request) {
 	util.WriteJSONResponse(w, http.StatusOK, profile)
 }
 
-func (h *StatsHandler) GiveUpvote(w http.ResponseWriter, r *http.Request)  {
+func (h *StatsHandler) GivenUpvote(w http.ResponseWriter, r *http.Request)  {
 	ctx := r.Context()
 	
 	fromUserIDString, ok := ctx.Value(middleware.UserIDKey).(string)
