@@ -58,17 +58,17 @@ func (s *StatsService) ProcessDailyCheckin(ctx context.Context, userID uuid.UUID
 		log.Printf("ProcessDailyCheckin - New checkin for user %s, streak count: %d", userID, streakCount)
 	}
 
-	// var newAchievements []Achievement
-	// if IsNewCheckin {
-	// 	achievements, err := s.statsRepository.CheckAwardsAndAchievements(ctx, userID)
-	// 	if err != nil {
-	// 		log.Printf("ProcessDailyCheckin - Error checking achievements for user %s: %v", userID, err)
-	// 		return nil, fmt.Errorf("failed to check achievements: %w", err)
-	// 	} else {
-			
-	// 	}
+	var newAchievements []Achievement
+	if IsNewCheckin {
+		achievements, err := s.statsRepository.CheckAwardsAndAchievements(ctx, userID)
+		if err != nil {
+			log.Printf("ProcessDailyCheckin - Error checking achievements for user %s: %v", userID, err)
+			return nil, fmt.Errorf("failed to check achievements: %w", err)
+		} else {
+			newAchievements = s.
+		}
 	
-	// }
+	}
 
 	return &CheckinResult{
 		StreakCount: streakCount,

@@ -1,11 +1,11 @@
 package middleware
 
 import (
-	"chat-application/util"
 	"net/http"
 	"context"
 	"log"
 
+	"chat-application/util"
 	"github.com/golang-jwt/jwt/v5"
 )
 

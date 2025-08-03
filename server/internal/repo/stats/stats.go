@@ -16,6 +16,7 @@ type UserStats struct {
 	TotalMessages int `db:"total_messages"`
 	TotalUpvotes int `db:"total_upvotes"`
 	LastCheckinDate *time.Time `db:"last_checkin_date"`
+	LastUpvoteGivenDate *time.Time `db:"last_upvote_given_date"`
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
 }
@@ -42,7 +43,7 @@ type Achievement struct {
 	Icon string `db:"icon"`
 	ThresholdType string `db:"threshold_type"`
 	ThresholdValue int `db:"threshold_value"`
-
+	EarnedAt *time.Time `db:"earned_at,omitempty"`
 }
 
 type StatsRepository struct {
@@ -60,7 +61,8 @@ func (r *StatsRepository) GetOrCreateUserStats(ctx context.Context, userID uuid.
 
 	query := `
 		SELECT user_id, daily_streak, total_checkins, total_messages,
-			total_upvotes, last_checkin_date, created_at, updated_at
+			total_upvotes, last_checkin_date, last_upvote_given_date, 
+			created_at, updated_at
 		FROM user_stats
 		WHERE user_id = $1
 	`
@@ -75,7 +77,8 @@ func (r *StatsRepository) GetOrCreateUserStats(ctx context.Context, userID uuid.
 			INSERT INTO user_stats (user_id)
 			VALUES ($1)
 			RETURNING user_id, daily_streak, total_checkins, total_messages,
-				total_upvotes, last_checkin_date, created_at, updated_at
+				total_upvotes, last_checkin_date, last_upvote_given_date,
+				created_at, updated_at
 		`
 
 		err = r.db.QueryRowContext(ctx, insertQuery, userID).Scan(
@@ -157,6 +160,35 @@ func (r *StatsRepository) GetUserAchievements(ctx context.Context, userID uuid.U
 		achievementID = append(achievementID, achID)
 	}
 	return achievementID, rows.Err()
+}
+
+func (r *StatsRepository) GetUserAchievementsDetails(ctx context.Context, userID uuid.UUID) ([]Achievement, error) {
+	query := `
+		SELECT at.id, at.name, at.description, at.icon, at.threshold_type, at.threshold_value, ua.earned_at
+		FROM user_achievements AS ua
+		JOIN achievement_types AS at ON ua.achievement_type_id = at.id
+		WHERE ua.user_id = $1
+		ORDER BY ua.earned_at DESC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		log.Printf("GetUserAchievementsDetails - Error querying user achievements: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var achievements []Achievement
+	for rows.Next() {
+		var ach Achievement
+		err := rows.Scan(&ach.ID, &ach.Name, &ach.Description, &ach.Icon, &ach.ThresholdType, &ach.ThresholdValue, &ach.EarnedAt)
+		if err != nil {
+			log.Printf("GetUserAchievementsDetails - Error scanning achievement: %v", err)
+			return nil, err
+		}
+		achievements = append(achievements, ach)
+	}
+	return achievements, rows.Err()
 }
 
 func (r *StatsRepository) GetAllAchievementTypes(ctx context.Context) ([]Achievement, error) {
@@ -266,4 +298,130 @@ func (r *StatsRepository) awardAchievement(ctx context.Context, userID, achievem
 
 	_, err := r.db.ExecContext(ctx, query, userID, achievementID)
 	return err
+}
+
+func (r *StatsRepository) CanUserUpvote(ctx context.Context, fromUserID, toUserID uuid.UUID) (bool, error) {
+	existsQuery := `
+		SELECT EXISTS (
+			SELECT 1 FROM upvotes
+			WHERE from_user_id = $1 AND to_user_id = $2
+		)
+	`
+
+	var alreadyUpvoted bool
+	err := r.db.QueryRowContext(ctx, existsQuery, fromUserID, toUserID).Scan(&alreadyUpvoted)
+	if err != nil {
+		log.Printf("CanUserUpvote - Error checking upvote existence: %v", err)
+		return false, err
+	}
+
+	if alreadyUpvoted {
+		return false, nil
+	}
+
+	today := time.Now().UTC().Truncate(24 * time.Hour)
+	todayQuery := `
+		SELECT last_upvote_given_date FROM user_stats
+		WHERE user_id = $1
+	`
+
+	var lastUpvoteDate * time.Time
+	err = r.db.QueryRowContext(ctx, todayQuery, fromUserID).Scan(&lastUpvoteDate)
+	if err != nil && err != sql.ErrNoRows {
+		log.Printf("CanUserUpvote - Error checking last upvote date: %v", err)
+		return false, err
+	}
+
+	if lastUpvoteDate != nil {
+		lastUpvote := lastUpvoteDate.UTC().Truncate(24 * time.Hour)
+		if lastUpvote.Equal(today) {
+			log.Printf("CanUserUpvote - User %s has already given an upvote today", fromUserID)
+			return false, nil // User has already given an upvote today
+		}
+	}
+
+	return true, nil
+}
+
+func (r *StatsRepository) GiveUpvote(ctx context.Context, fromUserID, toUserID uuid.UUID) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		log.Printf("GiveUpvote - Error starting transaction: %v", err)
+		return err
+	}
+	defer tx.Rollback()
+
+	today := time.Now().UTC().Truncate(24 * time.Hour)
+	
+	insertQuery := `
+		INSER INTO upvotes (from_user_id, to_user_id)
+		VALUES ($1, $2)
+	`
+
+	_, err = tx.ExecContext(ctx, insertQuery, fromUserID, toUserID)
+	if err != nil {
+		log.Printf("GiveUpvote - Error inserting upvote: %v", err)
+		return err
+	}
+
+	updateGivenQuery := `
+		UPDATE user_stats
+		SET last_upvote_given_date = $1, updated_at = NOW()
+		WHERE user_id = $2
+	`
+
+	_, err = tx.ExecContext(ctx, updateGivenQuery, today, fromUserID)
+	if err != nil {
+		log.Printf("GiveUpvote - Error updating last upvote date: %v", err)
+		return err
+	}
+
+	updateReceivedQuery := `
+		UPDATE user_stats
+		SET total_upvotes_received = total_upvotes_received + 1, updated_at = NOW()
+		WHERE user_id = $1
+	`
+
+	_, err = tx.ExecContext(ctx, updateReceivedQuery, toUserID)
+	if err != nil {
+		log.Printf("GiveUpvote - Error updating total upvotes for user %s: %v", toUserID, err)
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func (r *StatsRepository) IncrementMessageCount(ctx context.Context, userID uuid.UUID) error {
+	query := `
+		UPDATE user_stats
+		SET total_messages = total_messages + 1, updated_at = NOW()
+		WHERE user_id = $1
+	`
+
+	result, err := r.db.ExecContext(ctx, query, userID)
+	if err != nil {
+		log.Printf("IncrementMessageCount - Error incrementing message count for user %s: %v", userID, err)
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("IncrementMessageCount - Error getting rows affected for user %s: %v", userID, err)
+		return err
+	}
+
+	if rowsAffected == 0 {
+		_, err = r.GetOrCreateUserStats(ctx, userID)
+		if err != nil {
+			log.Printf("IncrementMessageCount - Error creating user stats for user %s: %v", userID, err)
+			return err
+		}
+
+		_, err = r.db.ExecContext(ctx, query, userID)
+		if err != nil {
+			log.Printf("IncrementMessageCount - Error incrementing message count for newly created user %s: %v", userID, err)
+			return err
+		}
+	}
+	return nil
 }
