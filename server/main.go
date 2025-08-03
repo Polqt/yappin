@@ -1,14 +1,21 @@
 package main
 
 import (
-	"chat-application/db"
-	"chat-application/db/migrations"
-	"chat-application/internal/api/handler/user"
-	"chat-application/internal/repo/user"
-	"chat-application/internal/service/user"
 	"log"
+	"net/http"
 
 	"github.com/joho/godotenv"
+
+	"chat-application/db"
+	"chat-application/db/migrations"
+
+	userHandler "chat-application/internal/api/handler/user"
+	userRepo "chat-application/internal/repo/user"
+	statsService "chat-application/internal/service/stats"
+	userService "chat-application/internal/service/user"
+
+	statsRepo "chat-application/internal/repo/stats"
+	"chat-application/router"
 )
 
 func main(){
@@ -33,11 +40,18 @@ func main(){
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
-	userRepo := repository.NewUserRepository(dbConn)
+	userRepo := userRepo.NewUserRepository(dbConn)
+	statsRepository := statsRepo.NewStatsRepository(dbConn)
 	
-	userService := service.NewUserService(userRepo)
+	userService := userService.NewUserService(userRepo)
+	statsService := statsService.NewStatsService(statsRepository)
 
-	userHandler := handler.NewUserHandler(userService)
+	userHandler := userHandler.NewUserHandler(userService)
+	
 
 	// router := router.SetupRoutes(userHandler)
+	router := router.SetupRoutes(userHandler)
+	if err := http.ListenAndServe(":8080", router); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }
