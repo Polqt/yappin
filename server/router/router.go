@@ -6,6 +6,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+
+	userHandler "chat-application/internal/api/handler/user"
 )
 
 func SetupRoutes() {
@@ -23,8 +25,10 @@ func SetupRoutes() {
 		MaxAge: 300,
 	}))
 
-	r.Route("/api/users", func(r chi.Router) {
-		
+	r.Route("/api/users", func(u chi.Router) {
+		u.Post("/sign-up", userHandler.CreateUser)
+		u.Post("/login", userHandler.Login)
+		u.Post("/logout", userHandler.Logout)
 	})
 
 	r.Get("/health", func(w http.ResponseWriter, _ *http.Request) {

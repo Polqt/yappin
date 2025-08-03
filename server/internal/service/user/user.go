@@ -154,7 +154,7 @@ func (s *UserService) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	return s.userRepo.DeleteUser(ctx, id)
 }
 
-func (s *UserService) UpdateUsername(ctx context.Context, userID, string, newUsername string) (*model.ResponseLoginUser, error) {
+func (s *UserService) UpdateUsername(ctx context.Context, userID string, newUsername string) (*model.ResponseLoginUser, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 

@@ -91,3 +91,33 @@ func (h *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 
 	util.WriteJSONResponse(w, http.StatusOK, map[string]string{"message": "logout successfull"})
 }
+
+func (h *UserHandler) UpdateUsername(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value("userID").(string)
+	if !ok {
+		util.WriteErrorResponse(w, http.StatusUnauthorized, "user not authenticated")
+		return
+	}
+
+	var req struct {
+		Username string `json:"username"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		util.WriteErrorResponse(w, http.StatusBadRequest, "invalid JSON payload")
+		return
+	}
+
+	if len(req.Username) < 3 || len(req.Username) > 20 {
+		util.WriteErrorResponse(w, http.StatusBadRequest, "username must between 3 and 20 characters")
+		return
+	}
+
+	user, err := h.userService.UpdateUsername(r.Context(), userID, req.Username)
+	if err != nil {
+		util.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	util.WriteJSONResponse(w, http.StatusOK, user)
+}
