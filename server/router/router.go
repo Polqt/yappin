@@ -8,12 +8,13 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 
+	coreHandler "chat-application/internal/api/handler/core"
 	statsHandler "chat-application/internal/api/handler/stats"
 	userHandler "chat-application/internal/api/handler/user"
 	authMiddleware "chat-application/middleware"
 )
 
-func SetupRoutes(userHandler *userHandler.UserHandler, statsHandler *statsHandler.StatsHandler) http.Handler {
+func SetupRoutes(userHandler *userHandler.UserHandler, coreHandler *coreHandler.CoreHandler, statsHandler *statsHandler.StatsHandler) http.Handler {
 	r := chi.NewRouter()
 	
 	r.Use(authMiddleware.SecurityHeaders)
@@ -64,10 +65,17 @@ func SetupRoutes(userHandler *userHandler.UserHandler, statsHandler *statsHandle
 				r.Get("/profile/{userID}", statsHandler.GetUserProfile)
 			})
 		})
-	})
 
-	r.Route("/ws", func(u chi.Router) {
-		u.Group(func(r chi.Router) {})
+		api.Route("/websoc", func(u chi.Router)  {
+			u.Group(func(r chi.Router)  {
+				r.Use(authMiddleware.OptionalJWTAuth)
+				r.Post("/create-room", coreHandler.CreateRoom)
+			})
+
+			u.Get("/join-room{roomId}", coreHandler.JoinRoom)
+			u.Get("get-rooms", coreHandler.GetRooms)
+			u.Get("get-clients", coreHandler.GetClients)
+		})
 	})
 	
 	r.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
