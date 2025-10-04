@@ -70,6 +70,22 @@ func (r *RoomRepository) CreateRoom(ctx context.Context, room *Room) (*Room, err
 			&room.CreatedAt,
 			&room.ExpiresAt,
 		)
+	} else {
+		query = `
+			INSERT INTO rooms (name, creator_id, expires_at)
+			VALUES ($1, $2, $3, $4)
+			RETURNING id, created_at, expires_at
+		`
+
+		err = r.db.QueryRowContext(ctx, query,
+			room.Name,
+			room.CreatorID,
+			room.ExpiresAt,
+		).Scan(
+			&room.ID,
+			&room.CreatedAt,
+			&room.ExpiresAt,
+		)
 	}
 
 	if err != nil {
@@ -82,7 +98,7 @@ func (r *RoomRepository) CreateRoom(ctx context.Context, room *Room) (*Room, err
 func (r *RoomRepository) GetRoomByID(ctx context.Context, id uuid.UUID) (*Room, error)  {
 	query := `
 		SELECT id, name, creator_id, created_at, expires_at, is_pinned,
-			topic_title, topic_description, topic_url, topic_source, topic_updated_at,
+			topic_title, topic_description, topic_url, topic_source, topic_updated_at
 		FROM rooms
 		WHERE id = $1
 	`

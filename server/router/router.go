@@ -72,9 +72,9 @@ func SetupRoutes(userHandler *userHandler.UserHandler, coreHandler *coreHandler.
 				r.Post("/create-room", coreHandler.CreateRoom)
 			})
 
-			u.Get("/join-room{roomId}", coreHandler.JoinRoom)
-			u.Get("get-rooms", coreHandler.GetRooms)
-			u.Get("get-clients", coreHandler.GetClients)
+			u.Get("/join-room/{roomId}", coreHandler.JoinRoom)
+			u.Get("/get-rooms", coreHandler.GetRooms)
+			u.Get("/get-clients", coreHandler.GetClients)
 		})
 	})
 	
