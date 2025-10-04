@@ -124,11 +124,21 @@ func (r *StatsRepository) ProcessDailyCheckin(ctx context.Context, userID uuid.U
 		}
 	}
 
-	updateQuery := `
-		INSERT INTO user_stats (user_id, checkin_date, streak_count)
+	insertQuery := `
+		INSERT INTO daily_checkins (user_id, checkin_date, streak_count)
 		VALUES ($1, $2, $3)
 	`
-	_, err = tx.ExecContext(ctx, updateQuery, userID, today, newStreak)
+	_, err = tx.ExecContext(ctx, insertQuery, userID, today, newStreak)
+	if err != nil {
+		return 0, false, err
+	}
+
+	updateStatsQuery := `
+		UPDATE user_stats
+		SET daily_streak = $1, last_checkin_date = $2, total_checkins = total_checkins + 1, updated_at = NOW()
+		WHERE user_id = $3
+	`
+	_, err = tx.ExecContext(ctx, updateStatsQuery, newStreak, today, userID)
 	if err != nil {
 		return 0, false, err
 	}
@@ -354,7 +364,7 @@ func (r *StatsRepository) GiveUpvote(ctx context.Context, fromUserID, toUserID u
 	today := time.Now().UTC().Truncate(24 * time.Hour)
 	
 	insertQuery := `
-		INSER INTO upvotes (from_user_id, to_user_id)
+		INSERT INTO upvotes (from_user_id, to_user_id)
 		VALUES ($1, $2)
 	`
 

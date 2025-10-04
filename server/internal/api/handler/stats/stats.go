@@ -54,7 +54,7 @@ func (h *StatsHandler) GetUserProfile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	targetUserIDString := chi.URLParam(r, "userID")
-	tagetUserID, err := uuid.Parse(targetUserIDString)
+	targetUserID, err := uuid.Parse(targetUserIDString)
 	if err != nil {
 		util.WriteErrorResponse(w, http.StatusBadRequest, "invalid user ID format")
 		return
@@ -67,9 +67,9 @@ func (h *StatsHandler) GetUserProfile(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	profile, err := h.statsService.GetUserProfile(ctx, tagetUserID, viewerUserID)
+	profile, err := h.statsService.GetUserProfile(ctx, targetUserID, viewerUserID)
 	if err != nil {
-		log.Printf("Error retrieving user profile for user %s: %v", tagetUserID, err)
+		log.Printf("Error retrieving user profile for user %s: %v", targetUserID, err)
 		util.WriteErrorResponse(w, http.StatusInternalServerError, "failed to retrieve user profile")
 	}
 
