@@ -1,95 +1,57 @@
-import { writable, derived } from 'svelte/store';
-import type { User } from '$lib/types/user';
-
-interface AuthState {
-	user: User | null;
-	loading: boolean;
-	error: string | null;
-	isAuthenticated: boolean;
-}
+import { writable } from 'svelte/store';
+import { authService } from '$services/auth';
+import type { AuthState } from '$types/auth';
 
 function createAuthStore() {
 	const { subscribe, set, update } = writable<AuthState>({
 		user: null,
-		loading: false,
-		error: null,
-		isAuthenticated: false
+		loading: true,
+		error: null
 	});
 
 	return {
 		subscribe,
-		login: async (email: string, password: string) => {
-			update((state) => ({ ...state, loading: true, error: null }));
+		async init() {
 			try {
-				const response = await fetch('/api/auth/login', {
-					method: 'POST',
-					credentials: 'include',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ email, password })
-				});
-
-				if (!response.ok) throw new Error('Login failed');
-
-				const user = await response.json();
-				update((state) => ({
-					...state,
-					user,
-					loading: false,
-					isAuthenticated: true
-				}));
-				return user;
+				const user = await authService.getCurrentUser();
+				set({ user, loading: false, error: null });
+			} catch {
+				set({ user: null, loading: false, error: null });
+			}
+		},
+		async login(credentials: { email: string; password: string }) {
+			update((s) => ({ ...s, loading: true, error: null }));
+			try {
+				const user = await authService.login(credentials);
+				set({ user, loading: false, error: null });
 			} catch (err) {
-				update((state) => ({
-					...state,
+				update((s) => ({
+					...s,
 					loading: false,
-					error: 'Invalid credentials',
-					isAuthenticated: false
+					error: err instanceof Error ? err.message : String(err)
 				}));
 				throw err;
 			}
 		},
-		logout: async () => {
+		async signup(credentials: { username: string; email: string; password: string }) {
+			update((s) => ({ ...s, loading: true, error: null }));
 			try {
-				await fetch('/api/auth/logout', {
-					method: 'POST',
-					credentials: 'include'
-				});
-			} finally {
-				set({
-					user: null,
+				const user = await authService.signup(credentials);
+				set({ user, loading: false, error: null });
+			} catch (err) {
+				update((s) => ({
+					...s,
 					loading: false,
-					error: null,
-					isAuthenticated: false
-				});
+					error: err instanceof Error ? err.message : String(err)
+				}));
+				throw err;
 			}
 		},
-		checkAuth: async () => {
-			update((state) => ({ ...state, loading: true }));
-			try {
-				const response = await fetch('/api/auth/me', {
-					credentials: 'include'
-				});
-
-				if (!response.ok) throw new Error();
-
-				const user = await response.json();
-				update(() => ({
-					user,
-					loading: false,
-					error: null,
-					isAuthenticated: true
-				}));
-			} catch {
-				set({
-					user: null,
-					loading: false,
-					error: null,
-					isAuthenticated: false
-				});
-			}
+		async logout() {
+			await authService.logout();
+			set({ user: null, loading: false, error: null });
 		}
 	};
 }
 
 export const auth = createAuthStore();
-export const isAuthenticated = derived(auth, ($auth) => $auth.isAuthenticated);

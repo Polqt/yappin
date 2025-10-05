@@ -3,3 +3,4 @@ import { writable } from "svelte/store";
 
 export const activeRoom = writable<Room | null>(null);
 export const messages = writable<Message[]>([]);
+export const rooms = writable<Room[]>([]);

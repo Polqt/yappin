@@ -26,7 +26,7 @@ func SetupRoutes(userHandler *userHandler.UserHandler, coreHandler *coreHandler.
 	r.Use(authMiddleware.Timeout(30*time.Second))
 	
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{"http://localhost:3000", "https://yappin.chat"},
+		AllowedOrigins: []string{"http://localhost:3000", "http://localhost:5173", "https://yappin.chat"},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders: []string{"Link"},
@@ -49,6 +49,7 @@ func SetupRoutes(userHandler *userHandler.UserHandler, coreHandler *coreHandler.
 
 			u.Group(func(r chi.Router)  {
 				r.Use(authMiddleware.JWTAuth)
+				r.Get("/me", userHandler.GetCurrentUser)
 				r.Put("/username", userHandler.UpdateUsername)
 			})
 		})

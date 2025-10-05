@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { auth } from '$lib/stores/auth';
+  import { auth } from '$stores/auth';
   import { goto } from '$app/navigation';
   import Button from '$lib/components/common/Button.svelte';
   import Input from '$lib/components/common/Input.svelte';
+  import { MessageCircle } from 'lucide-svelte';
 
   let email = '';
   let password = '';
@@ -10,59 +11,76 @@
   let error = '';
 
   async function handleSubmit() {
+    if (!email || !password) {
+      error = 'Please fill in all fields';
+      return;
+    }
     try {
       loading = true;
-      await auth.login(email, password);
-      goto('/');
+      error = '';
+      await auth.login({ email, password });
+      goto('/dashboard');
     } catch (err) {
-      error = 'Invalid credentials';
+      error = 'Invalid email or password';
     } finally {
       loading = false;
     }
   }
 </script>
 
-<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-  <div class="max-w-md w-full space-y-8">
-    <div>
-      <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-        Sign in to your account
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full bg-white rounded-lg shadow-xl p-8">
+    <div class="text-center mb-8">
+      <MessageCircle class="mx-auto h-12 w-12 text-blue-600" />
+      <h2 class="mt-4 text-3xl font-bold text-gray-900">
+        Welcome Back
       </h2>
+      <p class="mt-2 text-sm text-gray-600">
+        Sign in to your Yappin account
+      </p>
     </div>
     
-    <form class="mt-8 space-y-6" on:submit|preventDefault={handleSubmit}>
+    <form class="space-y-6" on:submit|preventDefault={handleSubmit}>
       {#if error}
-        <div class="rounded-md bg-red-50 p-4">
-          <p class="text-sm text-red-700">{error}</p>
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+          <p class="text-sm">{error}</p>
         </div>
       {/if}
 
-      <div class="rounded-md shadow-sm -space-y-px">
-        <Input
-          type="email"
-          required
-          bind:value={email}
-          label="Email address"
-          placeholder="Email address"
-        />
+      <Input
+        type="email"
+        bind:value={email}
+        label="Email Address"
+        placeholder="Enter your email"
+        required
+        {error}
+      />
 
-        <Input
-          type="password"
-          required
-          bind:value={password}
-          label="Password"
-          placeholder="Password"
-        />
-      </div>
+      <Input
+        type="password"
+        bind:value={password}
+        label="Password"
+        placeholder="Enter your password"
+        required
+      />
 
       <Button
         type="submit"
         variant="primary"
         disabled={loading}
-        class="w-full"
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-200"
       >
-        {loading ? 'Signing in...' : 'Sign in'}
+        {loading ? 'Signing in...' : 'Sign In'}
       </Button>
     </form>
+
+    <div class="mt-6 text-center">
+      <p class="text-sm text-gray-600">
+        Don't have an account?
+        <a href="/signup" class="font-medium text-blue-600 hover:text-blue-500 transition duration-200">
+          Sign up
+        </a>
+      </p>
+    </div>
   </div>
 </div>
