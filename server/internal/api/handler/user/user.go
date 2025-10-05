@@ -9,6 +9,8 @@ import (
 	service "chat-application/internal/service/user"
 	"chat-application/middleware"
 	"chat-application/util"
+
+	"github.com/google/uuid"
 )
 
 type UserHandler struct {
@@ -98,4 +100,31 @@ func (h *UserHandler) UpdateUsername(w http.ResponseWriter, r *http.Request) {
 	}
 
 	util.WriteJSONResponse(w, http.StatusOK, user)
+}
+
+func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok {
+		util.WriteErrorResponse(w, http.StatusUnauthorized, "user not authenticated")
+		return
+	}
+
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		util.WriteErrorResponse(w, http.StatusBadRequest, "invalid user id")
+		return
+	}
+
+	user, err := h.userService.GetUserByID(r.Context(), uid)
+	if err != nil {
+		util.WriteErrorResponse(w, http.StatusInternalServerError, "failed to get user")
+		return
+	}
+
+	response := model.ResponseLoginUser{
+		ID: user.ID.String(),
+		Username: user.Username,
+	}
+
+	util.WriteJSONResponse(w, http.StatusOK, response)
 }

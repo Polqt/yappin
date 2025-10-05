@@ -191,7 +191,45 @@ func (h *CoreHandler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CoreHandler) GetRooms(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
+	// Fetch active rooms from database
+	dbRooms, err := h.roomRepository.GetAllActiveRooms(ctx)
+	if err != nil {
+		util.WriteErrorResponse(w, http.StatusInternalServerError, "failed to fetch rooms")
+		return
+	}
+
+	rooms := make([]model.RoomRes, 0, len(dbRooms))
+	for _, room := range dbRooms {
+		rooms = append(rooms, model.RoomRes{
+			ID:               room.ID.String(),
+			Name:             room.Name,
+			IsPinned:         room.IsPinned,
+			CreatedAt:        room.CreatedAt,
+			Expires:          room.ExpiresAt,
+			TopicTitle:       room.TopicTitle,
+			TopicDescription: room.TopicDescription,
+			TopicURL:         room.TopicURL,
+			TopicSource:      room.TopicSource,
+		})
+
+		// Ensure room exists in memory map
+		if _, exists := h.core.Rooms[room.ID.String()]; !exists {
+			h.core.Rooms[room.ID.String()] = &websoc.Room{
+				ID:               room.ID.String(),
+				Name:             room.Name,
+				Clients:          make(map[string]*websoc.Client),
+				IsPinned:         room.IsPinned,
+				TopicTitle:       room.TopicTitle,
+				TopicDescription: room.TopicDescription,
+				TopicURL:         room.TopicURL,
+				TopicSource:      room.TopicSource,
+			}
+		}
+	}
+
+	util.WriteJSONResponse(w, http.StatusOK, rooms)
 }
 
 func (h *CoreHandler) GetClients(w http.ResponseWriter, r *http.Request) {

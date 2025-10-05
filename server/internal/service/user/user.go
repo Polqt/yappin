@@ -42,6 +42,7 @@ func (s *UserService) CreateUser(ctx context.Context, req model.RequestCreateUse
 	// Validate and sanitize input
 	req.Username = util.SanitizeString(req.Username)
 	req.Email = util.SanitizeString(req.Email)
+	req.Password = util.SanitizeString(req.Password)
 	
 	if err := util.ValidateUsername(req.Username); err != nil {
 		log.Printf("UserService.CreateUser - Username validation failed: %v", err)
@@ -114,6 +115,7 @@ func (s *UserService) Login(ctx context.Context, req model.RequestLoginUser) (*m
 	log.Printf("UserService.Login - Starting login attempt for email: %s", req.Email)
 
 	req.Email = util.SanitizeString(req.Email)
+	req.Password = util.SanitizeString(req.Password)
 	
 	if err := util.ValidateEmail(req.Email); err != nil {
 		log.Printf("UserService.Login - Email validation failed: %v", err)
@@ -141,7 +143,7 @@ func (s *UserService) Login(ctx context.Context, req model.RequestLoginUser) (*m
 		return nil, fmt.Errorf("invalid user account")
 	}
 
-	err = util.CheckPassword(req.Password, *user.PasswordHash)
+	err = util.CheckPassword(*user.PasswordHash, req.Password)
 	if err != nil {
 		log.Printf("UserService.Login - Password check failed for user: %s", user.ID.String())
 		return nil, fmt.Errorf("invalid email or password")
