@@ -28,13 +28,27 @@ A modern, real-time chat application built with a SvelteKit frontend and Go back
 
 ## Getting Started
 
-1. **Clone the repository**
+### For Contributors (Hacktoberfest)
+
+1. **Fork the repository**
+   - Click the "Fork" button on the top right of this repository
+   - This creates a copy of the repository in your GitHub account
+
+2. **Clone your fork**
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/your-username/yappin.git
    cd yappin
    ```
 
-2. **Set up environment variables**
+3. **Set up upstream remote** (optional, for staying updated)
+   ```bash
+   git remote add upstream https://github.com/Polqt/yappin.git
+   git fetch upstream
+   ```
+
+### Local Development Setup
+
+4. **Set up environment variables**
 
    Copy the example environment file and configure your settings:
    ```bash
@@ -43,34 +57,68 @@ A modern, real-time chat application built with a SvelteKit frontend and Go back
 
    Edit `server/.env` with your database credentials and other settings.
 
-3. **Start the database**
+5. **Start the database**
    ```bash
    docker-compose up -d db adminer
    ```
 
-4. **Run database migrations**
+6. **Run database migrations**
    ```bash
    cd server
    go run db/migrations/migrate.go up
    cd ..
    ```
 
-5. **Start the backend server**
+7. **Start the backend server**
    ```bash
    cd server
    go run main.go
    ```
 
-6. **Start the frontend (in a new terminal)**
+8. **Start the frontend (in a new terminal)**
    ```bash
    cd client
    npm install
    npm run dev
    ```
 
-7. **Access the application**
+9. **Access the application**
    - Frontend: http://localhost:5173
    - Adminer (Database UI): http://localhost:8080
+
+## Making Contributions
+
+After setting up your development environment:
+
+1. **Create a feature branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   # or for bug fixes:
+   git checkout -b fix/issue-description
+   ```
+
+2. **Make your changes**
+   - Follow the coding standards in [CONTRIBUTING.md](CONTRIBUTING.md)
+   - Test your changes thoroughly
+   - Update documentation if needed
+
+3. **Commit your changes**
+   ```bash
+   git add .
+   git commit -m "feat: add your feature description"
+   # Use conventional commit format (see CONTRIBUTING.md)
+   ```
+
+4. **Push to your fork**
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+
+5. **Create a Pull Request**
+   - Go to your fork on GitHub
+   - Click "Compare & pull request"
+   - Fill out the PR template with details about your changes
+   - Submit the PR for review
 
 ## Project Structure
 
