@@ -12,10 +12,14 @@
       console.error('Failed to load rooms:', err);
     }
   });
-  function handleJoinRoom(roomId: string) {
-    goto(`/room/${roomId}`);
+  async function handleJoinRoom(roomId: string) {
+    try{
+      await goto(`/room/${roomId}`);
+    }catch(err){
+      console.error('Failed to join room:', err);
+    }
   }
-  
+
 </script>
 
 <main class="min-h-screen bg-gray-100 p-8">
@@ -33,9 +37,11 @@
             <p>Participants: {room.participants}</p>
             <p>Created by: {room.createdBy}</p>
           </div>
-          <button 
-          on:click={() => handleJoinRoom(room.id)}
-          class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
+          <button
+            type="button"
+            on:click={() => handleJoinRoom(room.id)}
+            class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+          >
             Join Room
           </button>
         </div>
