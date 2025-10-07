@@ -3,13 +3,18 @@
   import { roomService } from '$services/room';
   import Button from '$lib/components/common/Button.svelte';
   import Input from '$lib/components/common/Input.svelte';
+  import type { CreateRoomRequest } from '$lib/types/room';
 
-  let name = '';
+  let request: CreateRoomRequest = {
+    name: '',
+    expires_at: ''
+  };
+
   let loading = false;
   let error = '';
 
   async function handleSubmit() {
-    if (!name) {
+    if (!request.name) {
       error = 'Room name is required';
       return;
     }
@@ -17,7 +22,8 @@
     try {
       loading = true;
       error = '';
-      await roomService.createRoom(name);
+
+      await roomService.createRoom(request);
       goto('/dashboard');
     } catch (err) {
       error = err instanceof Error ? err.message : 'Failed to create room. Please try again.';
@@ -47,10 +53,16 @@
 
       <Input
               type="text"
-              bind:value={name}
+              bind:value={request.name}
               label="Room Name"
               placeholder="Enter a name for your room"
               required
+      />
+
+      <Input
+              type="datetime-local"
+              bind:value={request.expires_at}
+              label="Expires At (Optional)"
       />
 
       <Button

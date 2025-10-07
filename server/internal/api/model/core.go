@@ -5,6 +5,7 @@ import "time"
 type CreateRoomReq struct {
 	ID string `json:"id,omitempty"`
 	Name string `json:"name"`
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
 }
 
 type ClientRes struct {
