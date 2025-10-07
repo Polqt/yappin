@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
@@ -88,10 +89,17 @@ func (h *CoreHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+    expiresAt := time.Now().Add(24 * time.Hour)
+	if req.ExpiresAt != nil && !req.ExpiresAt.IsZero() {
+		expiresAt = *req.ExpiresAt
+	}
+
 	room := &roomRepository.Room{
 		Name: req.Name,
 		CreatorID: creatorID,
+		ExpiresAt: expiresAt,
 	}
+
 
 	room, err = h.roomRepository.CreateRoom(ctx, room)
 	if err != nil {
