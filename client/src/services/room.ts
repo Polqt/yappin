@@ -12,5 +12,23 @@ export const roomService = {
       throw new Error('Failed to fetch rooms');
     }
     return response.json();
-  }
+  },
+
+	async createRoom(name: string): Promise<Room> {
+		const response = await fetch(`${BASE_URL}/api/websoc/create-room`, {
+			method: 'POST',
+			credentials: 'include',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({ name })
+		});
+
+		if (!response.ok) {
+			const errorData = await response.json();
+			console.log(errorData);
+			throw new Error(errorData.error || 'Failed to create room');
+		}
+		return response.json();
+	}
 };
