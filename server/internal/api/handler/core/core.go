@@ -12,6 +12,7 @@ import (
 	"chat-application/internal/api/model"
 	roomRepository "chat-application/internal/repo/room"
 	websoc "chat-application/internal/websocket"
+	"chat-application/middleware"
 	"chat-application/util"
 
 	"github.com/google/uuid"
@@ -49,9 +50,9 @@ func (h *CoreHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	
+
 	var creatorID *uuid.UUID
-	if userIDStr, ok := ctx.Value("userID").(string); ok {
+	if userIDStr, ok := ctx.Value(middleware.UserIDKey).(string); ok {
 		log.Printf("User ID from context: %s", userIDStr)
 		if uid, err := uuid.Parse(userIDStr); err == nil {
 			creatorID = &uid
