@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { rooms } from '$stores/room';
   import { roomService } from '$services/room';
+	import { goto } from '$app/navigation';
 
   onMount(async () => {
     try {
@@ -11,6 +12,10 @@
       console.error('Failed to load rooms:', err);
     }
   });
+  function handleJoinRoom(roomId: string) {
+    goto(`/room/${roomId}`);
+  }
+  
 </script>
 
 <main class="min-h-screen bg-gray-100 p-8">
@@ -28,7 +33,9 @@
             <p>Participants: {room.participants}</p>
             <p>Created by: {room.createdBy}</p>
           </div>
-          <button class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+          <button 
+          on:click={() => handleJoinRoom(room.id)}
+          class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
             Join Room
           </button>
         </div>
