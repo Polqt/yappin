@@ -18,3 +18,8 @@ export interface Message {
 }
 
 export type MessageType = 'TEXT' | 'IMAGE' | 'SYSTEM';
+
+export interface CreateRoomRequest {
+	name: string;
+	expires_at?: string | null;
+}
