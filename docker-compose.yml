@@ -22,7 +22,7 @@ services:
     user: postgres
 
   adminer:
-    image: adminer:4-standalone
+    image: adminer
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -33,6 +33,18 @@ services:
         condition: service_healthy
     environment:
       ADMINER_DEFAULT_SERVER: db
+
+  backend:
+    build:
+      context: ./server
+      dockerfile: DockerFile
+    ports:
+      - "8081:8080"
+    networks:
+      - chat_network
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   postgres_data:
