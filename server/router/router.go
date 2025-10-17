@@ -8,10 +8,10 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 
-	coreHandler "chat-application/internal/api/handler/core"
-	statsHandler "chat-application/internal/api/handler/stats"
-	userHandler "chat-application/internal/api/handler/user"
-	authMiddleware "chat-application/middleware"
+	coreHandler "chat-application/server/internal/api/handler/core"
+	statsHandler "chat-application/server/internal/api/handler/stats"
+	userHandler "chat-application/server/internal/api/handler/user"
+	authMiddleware "chat-application/server/internal/middleware"
 )
 
 func SetupRoutes(userHandler *userHandler.UserHandler, coreHandler *coreHandler.CoreHandler, statsHandler *statsHandler.StatsHandler) http.Handler {
@@ -70,6 +70,8 @@ func SetupRoutes(userHandler *userHandler.UserHandler, coreHandler *coreHandler.
 		api.Route("/websoc", func(u chi.Router)  {
 			u.Group(func(r chi.Router)  {
 				r.Use(authMiddleware.OptionalJWTAuth)
+				// Apply a stricter per-route rate limiter to prevent room-creation spam
+				r.Use(authMiddleware.RateLimiter(10)) // 10 requests per minute for creating rooms
 				r.Post("/create-room", coreHandler.CreateRoom)
 			})
 
