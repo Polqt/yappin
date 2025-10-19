@@ -9,25 +9,25 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"chat-application/db"
-	"chat-application/db/migrations"
+	"chat-application/server/db"
+	"chat-application/server/db/migrations"
 
-	userHandler "chat-application/internal/api/handler/user"
-	roomRepository "chat-application/internal/repo/room"
-	userRepo "chat-application/internal/repo/user"
-	userService "chat-application/internal/service/user"
-	websoc "chat-application/internal/websocket"
+	userHandler "chat-application/server/internal/api/handler/user"
+	roomRepository "chat-application/server/internal/repo/room"
+	userRepo "chat-application/server/internal/repo/user"
+	userService "chat-application/server/internal/service/user"
+	websoc "chat-application/server/internal/websocket"
 
-	statsHandler "chat-application/internal/api/handler/stats"
-	statsRepo "chat-application/internal/repo/stats"
-	statsService "chat-application/internal/service/stats"
+	statsHandler "chat-application/server/internal/api/handler/stats"
+	statsRepo "chat-application/server/internal/repo/stats"
+	statsService "chat-application/server/internal/service/stats"
 
-	coreHandler "chat-application/internal/api/handler/core"
-
-	pinnedRooms "chat-application/internal/service/pinnedrooms"
-
-	"chat-application/router"
+	coreHandler "chat-application/server/internal/api/handler/core"
+	pinnedRooms "chat-application/server/internal/service/pinnedrooms"
+	"chat-application/server/internal/middleware"
+	"chat-application/server/router"
 )
+
 
 func main(){
 	if err := godotenv.Load(); err != nil {
@@ -69,10 +69,13 @@ func main(){
 
 	go startRoomCleanup(dbConn, webService)
 
-	router := router.SetupRoutes(userHandler, coreHandler, statsHandler)
-	if err := http.ListenAndServe(":8080", router); err != nil {
+	rateLimiter := middleware.NewRateLimiter(100, time.Minute)
+	routerWithLimiter := rateLimiter.Middleware(router.SetupRoutes(userHandler, coreHandler, statsHandler))
+
+	if err := http.ListenAndServe(":8080", routerWithLimiter); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
+
 }
 
 func startRoomCleanup(db *sql.DB, websocketCore *websoc.Core) {
