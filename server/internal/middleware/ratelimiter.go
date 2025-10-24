@@ -8,7 +8,7 @@ import (
 )
 
 type RateLimiter struct {
-	requests map[string]int
+	requests  map[string]int
 	mu        sync.Mutex
 	resetTime time.Time
 	limit     int
@@ -17,7 +17,7 @@ type RateLimiter struct {
 
 func NewRateLimiter(limit int, window time.Duration) *RateLimiter {
 	return &RateLimiter{
-		requests: make(map[string]int),
+		requests:  make(map[string]int),
 		resetTime: time.Now().Add(window),
 		limit:     limit,
 		window:    window,
