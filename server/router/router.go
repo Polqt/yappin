@@ -35,12 +35,12 @@ func SetupRoutes(userHandler *userHandler.UserHandler, coreHandler *coreHandler.
 	}))
 
 	r.Route("/api", func(api chi.Router) {
-		api.Use(authMiddleware.RateLimiter(100))
+		api.Use(authMiddleware.GetRateLimiter(100))
 		api.Use(authMiddleware.ContentTypeJSON)
 
 		api.Route("/users", func(u chi.Router) {
 			u.Group(func(r chi.Router) {
-				r.Use(authMiddleware.RateLimiter(10))
+				r.Use(authMiddleware.GetRateLimiter(10))
 				r.Post("/sign-up", userHandler.CreateUser)
 				r.Post("/login", userHandler.Login)
 			})
@@ -71,7 +71,7 @@ func SetupRoutes(userHandler *userHandler.UserHandler, coreHandler *coreHandler.
 			u.Group(func(r chi.Router) {
 				r.Use(authMiddleware.OptionalJWTAuth)
 				// Apply a stricter per-route rate limiter to prevent room-creation spam
-				r.Use(authMiddleware.RateLimiter(10)) // 10 requests per minute for creating rooms
+				r.Use(authMiddleware.GetRateLimiter(10)) // 10 requests per minute for creating rooms
 				r.Post("/create-room", coreHandler.CreateRoom)
 			})
 

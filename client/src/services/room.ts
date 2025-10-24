@@ -1,6 +1,6 @@
 import type { CreateRoomRequest, Room } from '$lib/types/room';
 
-const BASE_URL = 'http://localhost:8080';
+const BASE_URL = 'http://localhost:8081';
 
 export const roomService = {
   async getRooms(): Promise<Room[]> {

@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"chat-application/internal/api/model"
+	"chat-application/internal/middleware"
 	service "chat-application/internal/service/user"
-	"chat-application/middleware"
 	"chat-application/util"
 
 	"github.com/google/uuid"
@@ -15,7 +15,7 @@ import (
 
 type UserHandler struct {
 	userService *service.UserService
-}	
+}
 
 func NewUserHandler(userService *service.UserService) *UserHandler {
 	return &UserHandler{
@@ -32,7 +32,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("CreateUser - Request received: username=%s, email=%s", req.Username, req.Email)
-	
+
 	user, err := h.userService.CreateUser(r.Context(), req)
 	if err != nil {
 		log.Printf("CreateUser - Service error: %v", err)
@@ -87,7 +87,7 @@ func (h *UserHandler) UpdateUsername(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req.Username = util.SanitizeString(req.Username)
-	
+
 	if err := util.ValidateUsername(req.Username); err != nil {
 		util.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
@@ -122,7 +122,7 @@ func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := model.ResponseLoginUser{
-		ID: user.ID.String(),
+		ID:       user.ID.String(),
 		Username: user.Username,
 	}
 
