@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"chat-application/internal/middleware"
 	statsService "chat-application/internal/service/stats"
-	"chat-application/middleware"
 	"chat-application/util"
 
 	"github.com/go-chi/chi/v5"
@@ -29,7 +29,7 @@ func (h *StatsHandler) CheckIn(w http.ResponseWriter, r *http.Request) {
 	userIDString, ok := ctx.Value(middleware.UserIDKey).(string)
 	if !ok {
 		util.WriteErrorResponse(w, http.StatusUnauthorized, "user not authenticated")
-		return 
+		return
 	}
 
 	userID, err := uuid.Parse(userIDString)
@@ -44,7 +44,7 @@ func (h *StatsHandler) CheckIn(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error processing daily check-in for user %s: %v", userID, err)
 		util.WriteErrorResponse(w, http.StatusInternalServerError, "failed to process daily check-in")
-		return 
+		return
 	}
 
 	util.WriteJSONResponse(w, http.StatusOK, result)
@@ -76,13 +76,13 @@ func (h *StatsHandler) GetUserProfile(w http.ResponseWriter, r *http.Request) {
 	util.WriteJSONResponse(w, http.StatusOK, profile)
 }
 
-func (h *StatsHandler) GivenUpvote(w http.ResponseWriter, r *http.Request)  {
+func (h *StatsHandler) GivenUpvote(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	
+
 	fromUserIDString, ok := ctx.Value(middleware.UserIDKey).(string)
 	if !ok {
 		util.WriteErrorResponse(w, http.StatusUnauthorized, "user not authenticated")
-		return 
+		return
 	}
 
 	fromUserID, err := uuid.Parse(fromUserIDString)

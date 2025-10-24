@@ -11,21 +11,21 @@ import (
 	"github.com/gorilla/websocket"
 
 	"chat-application/internal/api/model"
+	"chat-application/internal/middleware"
 	roomRepository "chat-application/internal/repo/room"
 	websoc "chat-application/internal/websocket"
-	"chat-application/middleware"
 	"chat-application/util"
 
 	"github.com/google/uuid"
 )
 
 type CoreHandler struct {
-	core *websoc.Core
+	core           *websoc.Core
 	roomRepository *roomRepository.RoomRepository
-	roomLimit int
+	roomLimit      int
 }
 
-func NewCoreHandler(c *websoc.Core) *CoreHandler  {
+func NewCoreHandler(c *websoc.Core) *CoreHandler {
 	roomLimit := 50
 	if maxRooomStr := util.GetEnv("MAX_ROOMS", ""); maxRooomStr != "" {
 		if limit, err := strconv.Atoi(maxRooomStr); err == nil {
@@ -33,10 +33,10 @@ func NewCoreHandler(c *websoc.Core) *CoreHandler  {
 		}
 	}
 
-	return  &CoreHandler{
-		core: c,
+	return &CoreHandler{
+		core:           c,
 		roomRepository: roomRepository.NewRoomRepository(c.GetDB()),
-		roomLimit: roomLimit,
+		roomLimit:      roomLimit,
 	}
 }
 
@@ -68,7 +68,7 @@ func (h *CoreHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 				util.WriteErrorResponse(w, http.StatusForbidden, "User already has an active room")
 				return
 			}
-			
+
 		} else {
 			log.Printf("Failed to parse user ID: %v", err)
 		}
@@ -89,17 +89,16 @@ func (h *CoreHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-    expiresAt := time.Now().Add(24 * time.Hour)
+	expiresAt := time.Now().Add(24 * time.Hour)
 	if req.ExpiresAt != nil && !req.ExpiresAt.IsZero() {
 		expiresAt = *req.ExpiresAt
 	}
 
 	room := &roomRepository.Room{
-		Name: req.Name,
+		Name:      req.Name,
 		CreatorID: creatorID,
 		ExpiresAt: expiresAt,
 	}
-
 
 	room, err = h.roomRepository.CreateRoom(ctx, room)
 	if err != nil {
@@ -108,21 +107,21 @@ func (h *CoreHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.core.Rooms[room.ID.String()] = &websoc.Room{
-		ID: room.ID.String(),
-		Name: room.Name,
-		Clients: make(map[string]*websoc.Client),
-		IsPinned: room.IsPinned,
-		TopicTitle: room.TopicTitle,
+		ID:               room.ID.String(),
+		Name:             room.Name,
+		Clients:          make(map[string]*websoc.Client),
+		IsPinned:         room.IsPinned,
+		TopicTitle:       room.TopicTitle,
 		TopicDescription: room.TopicDescription,
-		TopicURL: room.TopicURL,
-		TopicSource: room.TopicSource,
+		TopicURL:         room.TopicURL,
+		TopicSource:      room.TopicSource,
 	}
 
 	response := model.CreateRoomReq{
-		ID: room.ID.String(),
+		ID:   room.ID.String(),
 		Name: room.Name,
 	}
-	
+
 	util.WriteJSONResponse(w, http.StatusOK, response)
 
 }
@@ -154,21 +153,21 @@ func (h *CoreHandler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 
 	if _, exists := h.core.Rooms[dbRoom.ID.String()]; !exists {
 		h.core.Rooms[roomID] = &websoc.Room{
-			ID: roomID,
-			Name: dbRoom.Name,
-			Clients: make(map[string]*websoc.Client),
-			IsPinned: dbRoom.IsPinned,
-			TopicTitle: dbRoom.TopicTitle,
+			ID:               roomID,
+			Name:             dbRoom.Name,
+			Clients:          make(map[string]*websoc.Client),
+			IsPinned:         dbRoom.IsPinned,
+			TopicTitle:       dbRoom.TopicTitle,
 			TopicDescription: dbRoom.TopicDescription,
-			TopicURL: dbRoom.TopicURL,
-			TopicSource: dbRoom.TopicSource,
+			TopicURL:         dbRoom.TopicURL,
+			TopicSource:      dbRoom.TopicSource,
 		}
 	}
 
 	var upgrader = websocket.Upgrader{
-		ReadBufferSize: 1024,
+		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
-		CheckOrigin: func(r *http.Request) bool  {
+		CheckOrigin: func(r *http.Request) bool {
 			return true
 		},
 
@@ -186,10 +185,10 @@ func (h *CoreHandler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 	username := q.Get("username")
 
 	cl := &websoc.Client{
-		Conn: conn,
-		Message: make(chan *websoc.Message),
-		ID: clientID,
-		RoomID: roomID,
+		Conn:     conn,
+		Message:  make(chan *websoc.Message),
+		ID:       clientID,
+		RoomID:   roomID,
 		Username: username,
 	}
 
@@ -252,7 +251,7 @@ func (h *CoreHandler) GetClients(w http.ResponseWriter, r *http.Request) {
 
 	for _, c := range h.core.Rooms[roomID].Clients {
 		clients = append(clients, model.ClientRes{
-			ID: c.ID,
+			ID:       c.ID,
 			Username: c.Username,
 		})
 	}

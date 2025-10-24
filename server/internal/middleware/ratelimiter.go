@@ -54,7 +54,7 @@ func (r *RateLimiter) Middleware(next http.Handler) http.Handler {
 
 // RateLimiter is a convenience wrapper so router code can call authMiddleware.RateLimiter(limit)
 // It returns a middleware that enforces `limit` requests per 1 minute window.
-func RateLimiter(limit int) func(http.Handler) http.Handler {
+func GetRateLimiter(limit int) func(http.Handler) http.Handler {
 	rl := NewRateLimiter(limit, time.Minute)
 	return rl.Middleware
 }
