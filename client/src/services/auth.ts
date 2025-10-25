@@ -1,6 +1,6 @@
 import type { LoginCredentials, SignupCredentials, User } from '$types/auth'; // Changed imports
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
 
 export class AuthService {
 	async login(credentials: LoginCredentials): Promise<User> {

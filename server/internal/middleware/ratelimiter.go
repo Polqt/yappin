@@ -8,7 +8,7 @@ import (
 )
 
 type RateLimiter struct {
-	requests map[string]int
+	requests  map[string]int
 	mu        sync.Mutex
 	resetTime time.Time
 	limit     int
@@ -17,7 +17,7 @@ type RateLimiter struct {
 
 func NewRateLimiter(limit int, window time.Duration) *RateLimiter {
 	return &RateLimiter{
-		requests: make(map[string]int),
+		requests:  make(map[string]int),
 		resetTime: time.Now().Add(window),
 		limit:     limit,
 		window:    window,
@@ -54,7 +54,7 @@ func (r *RateLimiter) Middleware(next http.Handler) http.Handler {
 
 // RateLimiter is a convenience wrapper so router code can call authMiddleware.RateLimiter(limit)
 // It returns a middleware that enforces `limit` requests per 1 minute window.
-func RateLimiter(limit int) func(http.Handler) http.Handler {
+func GetRateLimiter(limit int) func(http.Handler) http.Handler {
 	rl := NewRateLimiter(limit, time.Minute)
 	return rl.Middleware
 }
