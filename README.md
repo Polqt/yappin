@@ -62,10 +62,10 @@ A modern, real-time chat application built with a SvelteKit frontend and Go back
    docker-compose up -d db adminer
    ```
 
-6. **Run database migrations**
+6. **Install dependencies**
    ```bash
    cd server
-   go run db/migrations/migrate.go up
+   go mod tidy
    cd ..
    ```
 
