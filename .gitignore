@@ -1,4 +1,5 @@
-# Server environment files
+# Environment files
+.env
 server/.env
 
 # Dependencies
