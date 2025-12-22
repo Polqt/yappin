@@ -26,7 +26,7 @@
       await auth.signup({ username, email, password });
       goto('/');
     } catch (err) {
-      error = 'Signup failed. Email may already be in use.';
+      error = '' + (err instanceof Error ? err.message : 'Signup failed. Please try again.');
     } finally {
       loading = false;
     }
@@ -80,7 +80,6 @@
         type="submit"
         variant="primary"
         disabled={loading}
-        class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition duration-200"
       >
         {loading ? 'Creating account...' : 'Create Account'}
       </Button>

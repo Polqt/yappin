@@ -16,39 +16,69 @@ function createWebSocketStore() {
 
   let socket: WebSocket | null = null;
 
-  const connect = (roomId: string) => {
-    const wsUrl = `${import.meta.env.VITE_WS_URL}/room/${roomId}`;
+  const connect = (roomId: string, username: string) => {
+    const wsUrl = `${import.meta.env.VITE_WS_URL}/join-room/${roomId}?username=${username}`;
+
     socket = new WebSocket(wsUrl);
 
     socket.onopen = () => {
-      update(state => ({ ...state, connected: true, error: null }));
-    };
-
-    socket.onmessage = (event) => {
-      const message = JSON.parse(event.data);
+      console.log('WebSocket connected');
       update(state => ({
         ...state,
-        messages: [...state.messages, message]
-      }));
+        connected: true,
+        error: null
+      }))
+    }
+
+    socket.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        update(state => ({
+          ...state,
+          messages: [...state.messages, message]
+        }));
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
     };
 
     socket.onclose = () => {
+      console.log('WebSocket disconnected');
       update(state => ({ ...state, connected: false }));
     };
+
+    socket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      update(state => ({
+        ...state,
+        connected: false,
+        error: 'WebSocket error occurred'
+      }))
+    }
   };
+
+  const disconnect = () => {
+    if (socket) {
+      socket.close();
+      socket = null;
+    }
+
+    set({ connected: false, messages: [], error: null });
+  }
+
+  const sendMessage = (content: string) => {
+    if (socket?.readyState === WebSocket.OPEN) {
+      socket.send(content);
+    } else {
+      console.error('WebSocket is not open. Unable to send message.');
+    }
+  }
 
   return {
     subscribe,
     connect,
-    disconnect: () => {
-      socket?.close();
-      set({ connected: false, messages: [], error: null });
-    },
-    sendMessage: (content: string) => {
-      if (socket?.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: 'MESSAGE', content }));
-      }
-    }
+    disconnect,
+    sendMessage
   };
 }
 
