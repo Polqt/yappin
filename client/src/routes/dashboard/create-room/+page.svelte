@@ -8,7 +8,7 @@
 
 	let request: CreateRoomRequest = {
 		name: '',
-		expires_at: ''
+		expires_at: undefined
 	};
 
 	let loading = false;
@@ -56,13 +56,12 @@
 				required
 			/>
 
-			<Input type="datetime-local" bind:value={request.expires_at} label="Expires At (Optional)" />
+			<Input type="datetime-local" bind:value={request.expires_at} label="Expires At (Optional)" on:change={(e) => { request.expires_at = e.target instanceof HTMLInputElement && e.target.value ? e.target.value : (undefined as any); }} />
 
 			<Button
 				type="submit"
 				variant="primary"
 				disabled={loading}
-				class="w-full rounded-md bg-green-600 px-4 py-2 font-medium text-white transition duration-200 hover:bg-green-700"
 			>
 				{loading ? 'Creating...' : 'Create Room'}
 			</Button>

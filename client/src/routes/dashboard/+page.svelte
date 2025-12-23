@@ -1,8 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { rooms } from '$stores/room';
   import { roomService } from '$services/room';
   import { goto } from '$app/navigation';
+
+  let checkinMessage = '';
+  let checkinLoading = false;
+  let todayCheckedIn = false;
+
   onMount(async () => {
     try {
       const fetchedRooms = await roomService.getRooms();

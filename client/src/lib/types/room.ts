@@ -9,12 +9,12 @@ export interface Room {
 }
 
 export interface Message {
-  id: string;
   content: string;
-  userId: string;
-  roomId: string;
-  type: MessageType;
-  createdAt: string;
+  room_id: string;
+  username: string;
+  user_id?: string;
+  system: boolean;
+  created_at?: string;
 }
 
 export type MessageType = 'TEXT' | 'IMAGE' | 'SYSTEM';
