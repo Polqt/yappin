@@ -1,6 +1,7 @@
 import { writable } from 'svelte/store';
 import { authService } from '$services/auth';
 import type { AuthState } from '$types/auth';
+import { getErrorMessage } from '$lib/utils/error';
 
 function createAuthStore() {
 	const { subscribe, set, update } = writable<AuthState>({
@@ -25,11 +26,8 @@ function createAuthStore() {
 				const user = await authService.login(credentials);
 				set({ user, loading: false, error: null });
 			} catch (err) {
-				update((s) => ({
-					...s,
-					loading: false,
-					error: err instanceof Error ? err.message : String(err)
-				}));
+				const error = getErrorMessage(err);
+				update((s) => ({ ...s, loading: false, error }));
 				throw err;
 			}
 		},
@@ -39,11 +37,8 @@ function createAuthStore() {
 				const user = await authService.signup(credentials);
 				set({ user, loading: false, error: null });
 			} catch (err) {
-				update((s) => ({
-					...s,
-					loading: false,
-					error: err instanceof Error ? err.message : String(err)
-				}));
+				const error = getErrorMessage(err);
+				update((s) => ({ ...s, loading: false, error }));
 				throw err;
 			}
 		},

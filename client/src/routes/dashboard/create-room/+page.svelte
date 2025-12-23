@@ -4,7 +4,7 @@
 	import Button from '$lib/components/common/Button.svelte';
 	import Input from '$lib/components/common/Input.svelte';
 	import type { CreateRoomRequest } from '$lib/types/room';
-	
+	import { getErrorMessage } from '$lib/utils/error';
 
 	let request: CreateRoomRequest = {
 		name: '',
@@ -23,11 +23,10 @@
 		try {
 			loading = true;
 			error = '';
-
 			await roomService.createRoom(request);
 			goto('/dashboard');
 		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to create room. Please try again.';
+			error = getErrorMessage(err);
 		} finally {
 			loading = false;
 		}
@@ -56,13 +55,9 @@
 				required
 			/>
 
-			<Input type="datetime-local" bind:value={request.expires_at} label="Expires At (Optional)" on:change={(e) => { request.expires_at = e.target instanceof HTMLInputElement && e.target.value ? e.target.value : (undefined as any); }} />
+			<Input type="datetime-local" bind:value={request.expires_at} label="Expires At (Optional)" />
 
-			<Button
-				type="submit"
-				variant="primary"
-				disabled={loading}
-			>
+			<Button type="submit" variant="primary" disabled={loading}>
 				{loading ? 'Creating...' : 'Create Room'}
 			</Button>
 		</form>

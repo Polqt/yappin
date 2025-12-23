@@ -1,25 +1,17 @@
-export interface Room {
-    id: string;
-    name: string;
-    description?: string;
-    createdBy: string;
-    participants: number;
-    createdAt: string;
-    updatedAt: string;
+import { writable } from 'svelte/store';
+import type { Room } from '$lib/types/room';
+
+function createRoomStore() {
+	const { subscribe, set, update } = writable<Room[]>([]);
+
+	return {
+		subscribe,
+		set,
+		update,
+		add: (room: Room) => update((rooms) => [...rooms, room]),
+		remove: (roomId: string) => update((rooms) => rooms.filter((r) => r.id !== roomId)),
+		clear: () => set([])
+	};
 }
 
-export interface Message {
-    content: string; // The actual message content
-    room_id: string; // Which room the message belongs to
-    username: string; // Who sent the message
-    user_id?: string; // No guests allowed
-    system: boolean; // True if the message is a system message like "Jepoy joined the room"
-    created_at: string;
-}
-
-export type MessageType = 'TEXT' | 'IMAGE' | 'SYSTEM';
-
-export interface CreateRoomRequest {
-    name: string;
-    expires_at?: string | null;
-}
+export const rooms = createRoomStore();

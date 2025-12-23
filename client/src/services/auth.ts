@@ -1,10 +1,10 @@
-import type { LoginCredentials, SignupCredentials, User } from '$types/auth'; // Changed imports
-
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
+import type { LoginCredentials, SignupCredentials, User } from '$types/auth';
+import { API_BASE_URL, API_ENDPOINTS } from '$lib/constants/api';
+import { handleApiError } from '$lib/utils/error';
 
 export class AuthService {
 	async login(credentials: LoginCredentials): Promise<User> {
-		const response = await fetch(`${BASE_URL}/api/users/login`, {
+		const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.auth.login}`, {
 			method: 'POST',
 			credentials: 'include',
 			headers: { 'Content-Type': 'application/json' },
@@ -12,29 +12,27 @@ export class AuthService {
 		});
 
 		if (!response.ok) {
-			const errorText = await response.text();
-			throw new Error(errorText || 'Login failed');
+			await handleApiError(response);
 		}
 		return response.json();
 	}
 
 	async signup(credentials: SignupCredentials): Promise<User> {
-		const response = await fetch(`${BASE_URL}/api/users/sign-up`, {
+		const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.auth.signup}`, {
 			method: 'POST',
-		credentials: 'include',
+			credentials: 'include',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(credentials)
 		});
 
 		if (!response.ok) {
-			const errorText = await response.text();
-			throw new Error(errorText || 'Signup failed');
+			await handleApiError(response);
 		}
 		return response.json();
 	}
 
 	async logout(): Promise<void> {
-		await fetch(`${BASE_URL}/api/users/logout`, {
+		await fetch(`${API_BASE_URL}${API_ENDPOINTS.auth.logout}`, {
 			method: 'POST',
 			credentials: 'include'
 		});
@@ -42,7 +40,7 @@ export class AuthService {
 
 	async getCurrentUser(): Promise<User | null> {
 		try {
-			const response = await fetch(`${BASE_URL}/api/users/me`, {
+			const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.auth.me}`, {
 				credentials: 'include'
 			});
 

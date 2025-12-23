@@ -1,65 +1,79 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { roomService } from '$services/room';
-  import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
+	import { rooms } from '$stores/room';
+	import { roomService } from '$services/room';
+	import { goto } from '$app/navigation';
 
-  let checkinMessage = '';
-  let checkinLoading = false;
-  let todayCheckedIn = false;
+	let loading = true;
+	let error = '';
 
-  onMount(async () => {
-    try {
-      const fetchedRooms = await roomService.getRooms();
-      rooms.set(fetchedRooms);
-    } catch (err) {
-      console.error('Failed to load rooms:', err);
-    }
-  });
-  async function handleJoinRoom(roomId: string) {
-    try{
-      await goto(`/room/${roomId}`);
-    }catch(err){
-      console.error('Failed to join room:', err);
-    }
-  }
+	onMount(async () => {
+		try {
+			const fetchedRooms = await roomService.getRooms();
+			rooms.set(fetchedRooms);
+		} catch (err) {
+			error = 'Failed to load rooms';
+			console.error('Failed to load rooms:', err);
+		} finally {
+			loading = false;
+		}
+	});
 
+	async function handleJoinRoom(roomId: string) {
+		try {
+			await goto(`/room/${roomId}`);
+		} catch (err) {
+			console.error('Failed to join room:', err);
+		}
+	}
 </script>
 
 <main class="min-h-screen bg-gray-100 p-8">
-  <div class="max-w-4xl mx-auto">
-    <div class="flex justify-between items-center mb-8">
-      <h1 class="text-3xl font-bold text-gray-800">Room Dashboard</h1>
-      <a href="/dashboard/create-room" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors">
-        Create Room
-      </a>
-    </div>
+	<div class="mx-auto max-w-4xl">
+		<div class="mb-8 flex items-center justify-between">
+			<h1 class="text-3xl font-bold text-gray-800">Room Dashboard</h1>
+			<a
+				href="/dashboard/create-room"
+				class="rounded bg-green-500 px-4 py-2 text-white transition-colors hover:bg-green-600"
+			>
+				Create Room
+			</a>
+		</div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {#each $rooms as room}
-        <div class="bg-white rounded-lg shadow-md p-6">
-          <h2 class="text-xl font-semibold text-gray-800 mb-2">{room.name}</h2>
-          {#if room.description}
-            <p class="text-gray-600 mb-4">{room.description}</p>
-
-          {/if}
-          <div class="text-sm text-gray-500">
-            <p>Participants: {room.participants}</p>
-            <p>Created by: {room.createdBy}</p>
-          </div>
-          <button
-                  type="button"
-                  on:click={() => handleJoinRoom(room.id)}
-                  class="mt-4 bg-blue-500
- text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
-          >
-            Join Room
-          </button>
-        </div>
-      {/each}
-    </div>
-
-    {#if $rooms.length === 0}
-      <p class="text-gray-600">No rooms available.</p>
-    {/if}
-  </div>
+		{#if loading}
+			<div class="py-12 text-center">
+				<p class="text-gray-600">Loading rooms...</p>
+			</div>
+		{:else if error}
+			<div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+				<p class="text-sm">{error}</p>
+			</div>
+		{:else if $rooms.length === 0}
+			<div class="py-12 text-center">
+				<p class="text-gray-600">No rooms available. Create one to get started!</p>
+			</div>
+		{:else}
+			<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+				{#each $rooms as room}
+					<div class="rounded-lg bg-white p-6 shadow-md">
+						<h2 class="mb-2 text-xl font-semibold text-gray-800">{room.name}</h2>
+						{#if room.description}
+							<p class="mb-4 text-gray-600">{room.description}</p>
+						{/if}
+						<div class="text-sm text-gray-500">
+							<p>Participants: {room.participants}</p>
+							<p>Created by: {room.createdBy}</p>
+						</div>
+						<button
+							type="button"
+							on:click={() => handleJoinRoom(room.id)}
+							class="mt-4 rounded bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
+						>
+							Join Room
+						</button>
+					</div>
+				{/each}
+			</div>
+		{/if}
+	</div>
 </main>
