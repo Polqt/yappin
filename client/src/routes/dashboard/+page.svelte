@@ -56,18 +56,32 @@
 			<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 				{#each $rooms as room}
 					<div class="rounded-lg bg-white p-6 shadow-md">
-						<h2 class="mb-2 text-xl font-semibold text-gray-800">{room.name}</h2>
-						{#if room.description}
-							<p class="mb-4 text-gray-600">{room.description}</p>
+						<div class="mb-2 flex items-center justify-between">
+							<h2 class="text-xl font-semibold text-gray-800">{room.name}</h2>
+							{#if room.is_pinned}
+								<span class="text-lg" title="Pinned Room">📌</span>
+							{/if}
+						</div>
+						{#if room.topic_description}
+							<p class="mb-4 text-gray-600">{room.topic_description}</p>
 						{/if}
-						<div class="text-sm text-gray-500">
-							<p>Participants: {room.participants}</p>
-							<p>Created by: {room.createdBy}</p>
+						<div class="mb-4 space-y-1 text-sm text-gray-500">
+							{#if room.creator_username}
+								<p>
+									Created by: <span class="font-medium text-gray-700">{room.creator_username}</span>
+								</p>
+							{:else}
+								<p>Created: {new Date(room.created_at).toLocaleDateString()}</p>
+							{/if}
+							<p>
+								Participants: <span class="font-medium text-gray-700">{room.participants}</span>
+							</p>
+							<p class="text-xs">Expires: {new Date(room.expires_at).toLocaleDateString()}</p>
 						</div>
 						<button
 							type="button"
 							on:click={() => handleJoinRoom(room.id)}
-							class="mt-4 rounded bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
+							class="w-full rounded bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
 						>
 							Join Room
 						</button>

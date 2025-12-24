@@ -208,7 +208,6 @@ func (h *CoreHandler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 func (h *CoreHandler) GetRooms(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// Fetch active rooms from database
 	dbRooms, err := h.roomRepository.GetAllActiveRooms(ctx)
 	if err != nil {
 		util.WriteErrorResponse(w, http.StatusInternalServerError, "failed to fetch rooms")
@@ -217,6 +216,21 @@ func (h *CoreHandler) GetRooms(w http.ResponseWriter, r *http.Request) {
 
 	rooms := make([]model.RoomRes, 0, len(dbRooms))
 	for _, room := range dbRooms {
+		var creatorUsername *string
+		if room.CreatorID != nil {
+			var username string
+			err := h.roomRepository.GetDB().QueryRowContext(ctx,
+				"SELECT username FROM users WHERE id = $1", room.CreatorID).Scan(&username)
+			if err == nil {
+				creatorUsername = &username
+			}
+		}
+
+		participantCount := 0
+		if wsRoom, exists := h.core.Rooms[room.ID.String()]; exists {
+			participantCount = len(wsRoom.Clients)
+		}
+
 		rooms = append(rooms, model.RoomRes{
 			ID:               room.ID.String(),
 			Name:             room.Name,
@@ -227,9 +241,10 @@ func (h *CoreHandler) GetRooms(w http.ResponseWriter, r *http.Request) {
 			TopicDescription: room.TopicDescription,
 			TopicURL:         room.TopicURL,
 			TopicSource:      room.TopicSource,
+			CreatorUsername:  creatorUsername,
+			Participants:     participantCount,
 		})
 
-		// Ensure room exists in memory map
 		if _, exists := h.core.Rooms[room.ID.String()]; !exists {
 			h.core.Rooms[room.ID.String()] = &websoc.Room{
 				ID:               room.ID.String(),
@@ -290,13 +305,13 @@ func (h *CoreHandler) AddReaction(w http.ResponseWriter, r *http.Request) {
 
 	if !isValid {
 		util.WriteErrorResponse(w, http.StatusBadRequest, "Invalid JSON")
-		return	
+		return
 	}
 
 	reaction := &model.MessageReaction{
 		MessageID: req.MessageID,
-		UserID: userID,
-		Emoji: req.Emoji,
+		UserID:    userID,
+		Emoji:     req.Emoji,
 	}
 
 	if err := h.roomRepository.AddReaction(r.Context(), reaction); err != nil {
@@ -310,7 +325,7 @@ func (h *CoreHandler) AddReaction(w http.ResponseWriter, r *http.Request) {
 func (h *CoreHandler) GetReactions(w http.ResponseWriter, r *http.Request) {
 	messageID := chi.URLParam(r, "messageID")
 	if messageID == "" {
-		util.WriteErrorResponse(w,http.StatusBadRequest, "Message ID is required")
+		util.WriteErrorResponse(w, http.StatusBadRequest, "Message ID is required")
 		return
 	}
 

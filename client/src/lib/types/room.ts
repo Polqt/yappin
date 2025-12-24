@@ -1,11 +1,15 @@
 export interface Room {
 	id: string;
 	name: string;
-	description?: string;
-	createdBy: string;
+	is_pinned: boolean;
+	created_at: string;
+	expires_at: string;
+	topic_title?: string;
+	topic_description?: string;
+	topic_url?: string;
+	topic_source?: string;
+	creator_username?: string;
 	participants: number;
-	createdAt: string;
-	updatedAt: string;
 }
 
 export interface Message {
