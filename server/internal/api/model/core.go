@@ -24,3 +24,16 @@ type RoomRes struct {
 	TopicURL *string `json:"topic_url,omitempty"`
 	TopicSource *string `json:"topic_source,omitempty"`
 }
+
+type MessageReaction struct {
+	ID 			string 		`json:"id"`
+	MessageID 	string 		`json:"message_id"`
+	UserID 		string 		`json:"user_id"`
+	Emoji 		string 		`json:"emoji"`
+	CreatedAt 	time.Time 	`json:"created_at"`
+}
+
+type RequestAddReaction struct {
+	MessageID string `json:"message_id"`
+	Emoji     string `json:"emoji"`
+}

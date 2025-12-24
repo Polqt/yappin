@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"chat-application/internal/api/model"
 	"context"
 	"database/sql"
 	"errors"
@@ -308,4 +309,59 @@ func (r *RoomRepository) DeleteExpiredRooms(ctx context.Context) (int, error) {
 	}
 
 	return int(rowsAffected), nil
+}
+
+func (r *RoomRepository) AddReaction(ctx context.Context, reaction *model.MessageReaction) error {
+	query := `
+		INSERT INTO message_reactions (message_id, user_id, emoji)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (message_id, user_id, emoji) DO NOTHING
+		RETURNING id, created_at
+	`
+
+	err := r.db.QueryRowContext(
+		ctx,
+		query,
+		reaction.MessageID,
+		reaction.UserID,
+		reaction.Emoji,
+	).Scan(&reaction.ID, &reaction.CreatedAt)
+
+	return err
+}
+
+func (r *RoomRepository) GetReactions(ctx context.Context, messageID string) ([]model.MessageReaction, error) {
+	query := `
+		SELECT id, message_id, user_id, emoji, created_at
+		FROM message_reactions
+		WHERE message_id = $1
+		ORDER BY created_at ASC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, messageID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// Slice to hold the reactions
+	reactions := []model.MessageReaction{}
+
+	for rows.Next() {
+		var reaction model.MessageReaction
+		err := rows.Scan(
+			&reaction.ID,
+			&reaction.MessageID,
+			&reaction.UserID,
+			&reaction.Emoji,
+			&reaction.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		reactions = append(reactions, reaction)
+	}
+
+	return reactions, nil
 }

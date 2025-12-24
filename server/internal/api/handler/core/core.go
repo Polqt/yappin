@@ -258,3 +258,44 @@ func (h *CoreHandler) GetClients(w http.ResponseWriter, r *http.Request) {
 
 	util.WriteJSONResponse(w, http.StatusOK, clients)
 }
+
+func (h *CoreHandler) AddReaction(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
+	if !ok {
+		util.WriteErrorResponse(w, http.StatusUnauthorized, "User not authenticated")
+		return
+	}
+
+	var req model.RequestAddReaction
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		util.WriteErrorResponse(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	allowedEmojis := []string{"👍", "❤️", "😂", "😮", "😢", "👏", "🎉"}
+	isValid := false
+	for _, emoji := range allowedEmojis {
+		if req.Emoji == emoji {
+			isValid = true
+			break
+		}
+	}
+
+	if !isValid {
+		util.WriteErrorResponse(w, http.StatusBadRequest, "Invalid JSON")
+		return	
+	}
+
+	reaction := &model.MessageReaction{
+		MessageID: req.MessageID,
+		UserID: userID,
+		Emoji: req.Emoji,
+	}
+
+	if err := h.roomRepository.AddReaction(r.Context(), reaction); err != nil {
+		util.WriteErrorResponse(w, http.StatusInternalServerError, "Failed to add reaction")
+		return
+	}
+
+	util.WriteJSONResponse(w, http.StatusCreated, reaction)
+}
