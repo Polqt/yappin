@@ -46,6 +46,15 @@ type Achievement struct {
 	EarnedAt *time.Time `db:"earned_at,omitempty"`
 }
 
+type LeaderboardEntry struct {
+	UserID 			string 		`db:"user_id"`
+	Username 		string 		`db:"username"`
+	TotalMessages 	int 		`db:"total_messages"`
+	TotalUpvotes 	int 		`db:"total_upvotes"`
+	DailyStreak 	int 		`db:"daily_streak"`
+	Rank 			int 		`db:"rank"`
+}
+
 type StatsRepository struct {
 	db *sql.DB
 } 
@@ -434,4 +443,52 @@ func (r *StatsRepository) IncrementMessageCount(ctx context.Context, userID uuid
 		}
 	}
 	return nil
+}
+
+func (r *StatsRepository) GetLeaderboard(ctx context.Context, limit int) ([]LeaderboardEntry, error) {
+	query := `
+        SELECT 
+            u.id,
+            u.username,
+            COALESCE(s.total_messages, 0) as total_messages,
+            COALESCE(s.total_upvotes_received, 0) as total_upvotes,
+            COALESCE(s.daily_streak, 0) as daily_streak,
+            -- Calculate rank based on a score formula
+            ROW_NUMBER() OVER (
+                ORDER BY 
+                    (COALESCE(s.total_messages, 0) * 1) +      -- 1 point per message
+                    (COALESCE(s.total_upvotes_received, 0) * 5) +  -- 5 points per upvote
+                    (COALESCE(s.daily_streak, 0) * 10)         -- 10 points per streak day
+                DESC
+            ) as rank
+        FROM users u
+        LEFT JOIN user_stats s ON u.id = s.user_id
+        ORDER BY rank
+        LIMIT $1
+    `
+
+	rows, err := r.db.QueryContext(ctx, query, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var leaderboard []LeaderboardEntry
+	for rows.Next() {
+		var entry LeaderboardEntry
+		err := rows.Scan(
+			&entry.UserID,
+			&entry.Username,
+			&entry.TotalMessages,
+			&entry.TotalUpvotes,
+			&entry.DailyStreak,
+			&entry.Rank,
+		)
+		if err != nil {
+			return nil, err
+		}
+		leaderboard = append(leaderboard, entry)
+	}
+
+	return leaderboard, nil
 }

@@ -1,0 +1,6 @@
+.env
+.env.example
+.air.toml
+*.md
+.git
+.gitignore
