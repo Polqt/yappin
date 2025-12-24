@@ -32,7 +32,7 @@ type Message struct {
 	Username string `json:"username"`
 	Content string `json:"content"`
 	IsSystem bool `json:"is_system"`
-	CreateAt time.Time `json:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type RoomRepository struct {
@@ -203,7 +203,7 @@ func (r *RoomRepository) CreateMessage(ctx context.Context, message *Message) (*
 		message.IsSystem,
 	).Scan(
 		&message.ID,
-		&message.CreateAt,
+		&message.CreatedAt,
 	)
 	
 	if err != nil {
@@ -239,7 +239,7 @@ func (r *RoomRepository) GetRoomMessages(ctx context.Context, roomID uuid.UUID, 
 			&msg.Username,
 			&msg.Content,
 			&msg.IsSystem,
-			&msg.CreateAt,
+			&msg.CreatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan message: %w", err)

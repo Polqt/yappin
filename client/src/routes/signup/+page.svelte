@@ -13,15 +13,6 @@
 	let error = '';
 
 	async function handleSubmit() {
-		if (!username || !email || !password) {
-			error = 'Please fill in all fields';
-			return;
-		}
-		if (password.length < 6) {
-			error = 'Password must be at least 6 characters';
-			return;
-		}
-
 		try {
 			loading = true;
 			error = '';
@@ -72,7 +63,7 @@
 				type="password"
 				bind:value={password}
 				label="Password"
-				placeholder="Create a password (min 6 chars)"
+				placeholder="Min 8 chars (uppercase, number, special char)"
 				required
 			/>
 

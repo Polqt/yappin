@@ -86,7 +86,7 @@ func OptionalJWTAuth(next http.Handler) http.Handler {
 				log.Printf("Unexpected signing method: %v", t.Header["alg"])
 				return nil, jwt.ErrSignatureInvalid
 			}
-			
+
 			secretKey := util.GetEnv("JWT_SECRET_KEY", "")
 			if secretKey == "" {
 				log.Println("JWT_SECRET_KEY is not set in environment variables")
@@ -98,14 +98,14 @@ func OptionalJWTAuth(next http.Handler) http.Handler {
 
 		if err != nil {
 			log.Printf("Error parsing JWT: %v", err)
-			util.WriteErrorResponse(w, http.StatusUnauthorized, "invalid auth token")
+			// Don't write error response - this is OPTIONAL auth
 			next.ServeHTTP(w, r)
 			return
 		}
 
 		if !token.Valid {
 			log.Println("Invalid JWT token")
-			util.WriteErrorResponse(w, http.StatusUnauthorized, "invalid auth token")
+			// Don't write error response - this is OPTIONAL auth
 			next.ServeHTTP(w, r)
 			return
 		}

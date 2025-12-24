@@ -9,6 +9,14 @@ export function getErrorMessage(error: unknown): string {
 }
 
 export async function handleApiError(response: Response): Promise<never> {
-	const errorText = await response.text().catch(() => 'Request failed');
-	throw new Error(errorText || `Request failed with status ${response.status}`);
+	try {
+		const errorData = await response.json();
+		const errorMessage = errorData.error || errorData.message || 'Request failed';
+		throw new Error(errorMessage);
+	} catch (e) {
+		if (e instanceof Error && e.message !== 'Request failed') {
+			throw e;
+		}
+		throw new Error(`Request failed with status ${response.status}`);
+	}
 }

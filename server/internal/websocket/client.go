@@ -58,6 +58,9 @@ func (c *Client) WriteMessage() {
 			return
 		}
 
-		c.Conn.WriteJSON(message)
+		if err := c.Conn.WriteJSON(message); err != nil {
+			log.Printf("error writing message: %v", err)
+			return
+		}
 	}
 }

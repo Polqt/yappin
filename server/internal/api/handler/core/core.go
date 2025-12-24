@@ -182,7 +182,14 @@ func (h *CoreHandler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 
 	q := r.URL.Query()
 	clientID := q.Get("client_id")
+	if clientID == "" {
+		clientID = uuid.New().String()
+	}
+
 	username := q.Get("username")
+	if username == "" {
+		username = "Anonymous"
+	}
 
 	cl := &websoc.Client{
 		Conn:     conn,
@@ -298,4 +305,20 @@ func (h *CoreHandler) AddReaction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	util.WriteJSONResponse(w, http.StatusCreated, reaction)
+}
+
+func (h *CoreHandler) GetReactions(w http.ResponseWriter, r *http.Request) {
+	messageID := chi.URLParam(r, "messageID")
+	if messageID == "" {
+		util.WriteErrorResponse(w,http.StatusBadRequest, "Message ID is required")
+		return
+	}
+
+	reactions, err := h.roomRepository.GetReactions(r.Context(), messageID)
+	if err != nil {
+		util.WriteErrorResponse(w, http.StatusInternalServerError, "Failed to fetch reactions")
+		return
+	}
+
+	util.WriteJSONResponse(w, http.StatusOK, reactions)
 }

@@ -26,7 +26,7 @@ func SetupRoutes(userHandler *userHandler.UserHandler, coreHandler *coreHandler.
 	r.Use(authMiddleware.Timeout(30 * time.Second))
 
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:5174", "https://yappin.chat"},
+		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:5173", "http://localhost:5174", "https://yappin.chat"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
@@ -74,6 +74,9 @@ func SetupRoutes(userHandler *userHandler.UserHandler, coreHandler *coreHandler.
 				r.Use(authMiddleware.GetRateLimiter(10)) // 10 requests per minute for creating rooms
 				r.Post("/create-room", coreHandler.CreateRoom)
 			})
+
+			u.With(authMiddleware.JWTAuth).Post("/reactions", coreHandler.AddReaction)
+			u.Get("/reactions/{messageID}", coreHandler.GetReactions)
 
 			u.Get("/join-room/{roomId}", coreHandler.JoinRoom)
 			u.Get("/get-rooms", coreHandler.GetRooms)

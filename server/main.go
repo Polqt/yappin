@@ -71,7 +71,7 @@ func main() {
 	rateLimiter := middleware.NewRateLimiter(100, time.Minute)
 	routerWithLimiter := rateLimiter.Middleware(router.SetupRoutes(userHandler, coreHandler, statsHandler))
 
-	if err := http.ListenAndServe(":8081", routerWithLimiter); err != nil {
+	if err := http.ListenAndServe(":8080", routerWithLimiter); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 
