@@ -42,11 +42,11 @@
         </button>
 
         {#if showPicker}
-            <div class="absolute bottom-full mb-2 p-2 bg-white rounded-lg shadow-lg border flex gap-1">
+            <div class="absolute bottom-full mb-2 p-2 bg-white rounded-lg shadow-lg border flex gap-1 z-10">
                 {#each emojiOptions as emoji}
                     <button
                         on:click={() => handleEmojiClick(emoji)}
-                        class="text-2xl hover:scale-125 transti"
+                        class="text-2xl hover:scale-125 transtion-transform"
                     >
                         {emoji}
                     </button>
