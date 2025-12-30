@@ -262,22 +262,6 @@ func (r *RoomRepository) GetRoomMessages(ctx context.Context, roomID uuid.UUID, 
 	return messages, nil
 }
 
-func (r *RoomRepository) HasActiveRoom(ctx context.Context, userID uuid.UUID) (bool, error) {
-	var count int
-
-	query := `
-		SELECT COUNT(*)
-		FROM rooms
-		WHERE creator_id = $1 AND expires_at > NOW()
-	`
-
-	err := r.db.QueryRowContext(ctx, query, userID).Scan(&count)
-	if err != nil {
-		return false, fmt.Errorf("failed to check active rooms: %w", err)
-	}
-
-	return count > 0, nil
-}
 
 func (r *RoomRepository) CountPinnedRooms(ctx context.Context) (int, error) {
 	var count int

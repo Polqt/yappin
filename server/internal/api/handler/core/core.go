@@ -58,17 +58,6 @@ func (h *CoreHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 		if uid, err := uuid.Parse(userIDStr); err == nil {
 			creatorID = &uid
 
-			hasRoom, err := h.roomRepository.HasActiveRoom(ctx, uid)
-			if err != nil {
-				util.WriteErrorResponse(w, http.StatusInternalServerError, "Failed to check active rooms")
-				return
-			}
-
-			if hasRoom {
-				util.WriteErrorResponse(w, http.StatusForbidden, "User already has an active room")
-				return
-			}
-
 		} else {
 			log.Printf("Failed to parse user ID: %v", err)
 		}
