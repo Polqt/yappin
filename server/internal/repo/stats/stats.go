@@ -10,54 +10,54 @@ import (
 )
 
 type UserStats struct {
-	UserID uuid.UUID `db:"user_id"`
-	DailyStreak int `db:"daily_streak"`
-	TotalCheckins int `db:"total_checkins"`
-	TotalMessages int `db:"total_messages"`
-	TotalUpvotes int `db:"total_upvotes"`
-	LastCheckinDate *time.Time `db:"last_checkin_date"`
+	UserID              uuid.UUID  `db:"user_id"`
+	DailyStreak         int        `db:"daily_streak"`
+	TotalCheckins       int        `db:"total_checkins"`
+	TotalMessages       int        `db:"total_messages"`
+	TotalUpvotes        int        `db:"total_upvotes"`
+	LastCheckinDate     *time.Time `db:"last_checkin_date"`
 	LastUpvoteGivenDate *time.Time `db:"last_upvote_given_date"`
-	CreatedAt time.Time `db:"created_at"`
-	UpdatedAt time.Time `db:"updated_at"`
+	CreatedAt           time.Time  `db:"created_at"`
+	UpdatedAt           time.Time  `db:"updated_at"`
 }
 
 type DailyCheckin struct {
-	ID uuid.UUID `db:"id"`
-	UserID uuid.UUID `db:"user_id"`
+	ID          uuid.UUID `db:"id"`
+	UserID      uuid.UUID `db:"user_id"`
 	CheckinDate time.Time `db:"checkin_date"`
-	StreakCount int `db:"streak_count"`
-	CreatedAt time.Time `db:"created_at"`
+	StreakCount int       `db:"streak_count"`
+	CreatedAt   time.Time `db:"created_at"`
 }
 
 type Upvote struct {
-	ID uuid.UUID `db:"id"`
+	ID         uuid.UUID `db:"id"`
 	FromUserID uuid.UUID `db:"from_user_id"`
-	ToUserID uuid.UUID `db:"to_user_id"`
-	CreateAt time.Time `db:"created_at"`
+	ToUserID   uuid.UUID `db:"to_user_id"`
+	CreateAt   time.Time `db:"created_at"`
 }
 
 type Achievement struct {
-	ID uuid.UUID `db:"id"`
-	Name string `db:"name"`
-	Description string `db:"description"`
-	Icon string `db:"icon"`
-	ThresholdType string `db:"threshold_type"`
-	ThresholdValue int `db:"threshold_value"`
-	EarnedAt *time.Time `db:"earned_at,omitempty"`
+	ID             uuid.UUID  `db:"id"`
+	Name           string     `db:"name"`
+	Description    string     `db:"description"`
+	Icon           string     `db:"icon"`
+	ThresholdType  string     `db:"threshold_type"`
+	ThresholdValue int        `db:"threshold_value"`
+	EarnedAt       *time.Time `db:"earned_at,omitempty"`
 }
 
 type LeaderboardEntry struct {
-	UserID 			string 		`db:"user_id"`
-	Username 		string 		`db:"username"`
-	TotalMessages 	int 		`db:"total_messages"`
-	TotalUpvotes 	int 		`db:"total_upvotes"`
-	DailyStreak 	int 		`db:"daily_streak"`
-	Rank 			int 		`db:"rank"`
+	UserID        string `db:"user_id"`
+	Username      string `db:"username"`
+	TotalMessages int    `db:"total_messages"`
+	TotalUpvotes  int    `db:"total_upvotes"`
+	DailyStreak   int    `db:"daily_streak"`
+	Rank          int    `db:"rank"`
 }
 
 type StatsRepository struct {
 	db *sql.DB
-} 
+}
 
 func NewStatsRepository(db *sql.DB) *StatsRepository {
 	return &StatsRepository{
@@ -79,7 +79,7 @@ func (r *StatsRepository) GetOrCreateUserStats(ctx context.Context, userID uuid.
 	err := r.db.QueryRowContext(ctx, query, userID).Scan(
 		&stats.UserID, &stats.DailyStreak, &stats.TotalCheckins,
 		&stats.TotalMessages, &stats.TotalUpvotes, &stats.LastCheckinDate,
-		&stats.CreatedAt, &stats.UpdatedAt,
+		&stats.LastUpvoteGivenDate, &stats.CreatedAt, &stats.UpdatedAt,
 	)
 	if err == sql.ErrNoRows {
 		insertQuery := `
@@ -93,7 +93,7 @@ func (r *StatsRepository) GetOrCreateUserStats(ctx context.Context, userID uuid.
 		err = r.db.QueryRowContext(ctx, insertQuery, userID).Scan(
 			&stats.UserID, &stats.DailyStreak, &stats.TotalCheckins,
 			&stats.TotalMessages, &stats.TotalUpvotes, &stats.LastCheckinDate,
-			&stats.CreatedAt, &stats.UpdatedAt,
+			&stats.LastUpvoteGivenDate, &stats.CreatedAt, &stats.UpdatedAt,
 		)
 	}
 	return stats, err
@@ -170,7 +170,7 @@ func (r *StatsRepository) GetUserAchievements(ctx context.Context, userID uuid.U
 	defer rows.Close()
 
 	var achievementID []uuid.UUID
-	
+
 	for rows.Next() {
 		var achID uuid.UUID
 		if err := rows.Scan(&achID); err != nil {
@@ -228,7 +228,7 @@ func (r *StatsRepository) GetAllAchievementTypes(ctx context.Context) ([]Achieve
 	for rows.Next() {
 		var ach Achievement
 		err := rows.Scan(&ach.ID, &ach.Name, &ach.Description, &ach.Icon, &ach.ThresholdType, &ach.ThresholdValue)
-		
+
 		if err != nil {
 			log.Printf("GetAllAchievementTypes - Error scanning achievement type: %v", err)
 			return nil, err
@@ -276,19 +276,19 @@ func (r *StatsRepository) CheckAwardsAndAchievements(ctx context.Context, userID
 		default:
 			continue
 		}
-	
+
 		if currentValue >= achType.ThresholdValue {
 			if err := r.awardAchievement(ctx, userID, achType.ID); err != nil {
 				log.Printf("CheckAwardsAndAchievements - Error awarding achievement %s to user %s: %v", achType.ID, userID, err)
 				continue
 			}
 
-			achievement := Achievement {
-				ID: achType.ID,
-				Name: achType.Name,
-				Description: achType.Description,
-				Icon: achType.Icon,
-				ThresholdType: achType.ThresholdType,
+			achievement := Achievement{
+				ID:             achType.ID,
+				Name:           achType.Name,
+				Description:    achType.Description,
+				Icon:           achType.Icon,
+				ThresholdType:  achType.ThresholdType,
 				ThresholdValue: achType.ThresholdValue,
 			}
 
@@ -344,7 +344,7 @@ func (r *StatsRepository) CanUserUpvote(ctx context.Context, fromUserID, toUserI
 		WHERE user_id = $1
 	`
 
-	var lastUpvoteDate * time.Time
+	var lastUpvoteDate *time.Time
 	err = r.db.QueryRowContext(ctx, todayQuery, fromUserID).Scan(&lastUpvoteDate)
 	if err != nil && err != sql.ErrNoRows {
 		log.Printf("CanUserUpvote - Error checking last upvote date: %v", err)
@@ -371,7 +371,7 @@ func (r *StatsRepository) GiveUpvote(ctx context.Context, fromUserID, toUserID u
 	defer tx.Rollback()
 
 	today := time.Now().UTC().Truncate(24 * time.Hour)
-	
+
 	insertQuery := `
 		INSERT INTO upvotes (from_user_id, to_user_id)
 		VALUES ($1, $2)
