@@ -20,9 +20,12 @@ function createWebSocketStore() {
 	const connect = (roomId: string, username: string) => {
 		const wsUrl = `${WS_BASE_URL}${API_ENDPOINTS.rooms.join(roomId)}?username=${encodeURIComponent(username)}`;
 
+		console.log('Connecting to WebSocket:', wsUrl);
+
 		socket = new WebSocket(wsUrl);
 
 		socket.onopen = () => {
+			console.log('WebSocket connected!');
 			update((state) => ({
 				...state,
 				connected: true,
@@ -31,6 +34,7 @@ function createWebSocketStore() {
 		};
 
 		socket.onmessage = (event) => {
+			console.log('Message received:', event.data);
 			try {
 				const message = JSON.parse(event.data);
 				update((state) => ({
@@ -42,11 +46,13 @@ function createWebSocketStore() {
 			}
 		};
 
-		socket.onclose = () => {
+		socket.onclose = (event) => {
+			console.log('WebSocket closed:', event.code, event.reason);
 			update((state) => ({ ...state, connected: false }));
 		};
 
-		socket.onerror = () => {
+		socket.onerror = (error) => {
+			console.error('WebSocket error:', error);
 			update((state) => ({
 				...state,
 				connected: false,

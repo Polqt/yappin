@@ -14,6 +14,11 @@ export const roomService = {
 		return response.json();
 	},
 
+	async getRoomById(roomId: string): Promise<Room | null> {
+		const rooms = await this.getRooms();
+		return rooms.find((room) => room.id === roomId) || null;
+	},
+
 	async createRoom(request: CreateRoomRequest): Promise<Room> {
 		const body: { name: string; expires_at?: string } = {
 			name: request.name

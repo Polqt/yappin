@@ -11,6 +11,6 @@ export const API_ENDPOINTS = {
 	rooms: {
 		list: '/api/websoc/get-rooms',
 		create: '/api/websoc/create-room',
-		join: (roomId: string) => `/api/websoc/join-room?room_id=${roomId}`
+		join: (roomId: string) => `/api/websoc/join-room/${roomId}`
 	}
 } as const;

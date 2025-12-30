@@ -262,7 +262,6 @@ func (r *RoomRepository) GetRoomMessages(ctx context.Context, roomID uuid.UUID, 
 	return messages, nil
 }
 
-
 func (r *RoomRepository) CountPinnedRooms(ctx context.Context) (int, error) {
 	var count int
 

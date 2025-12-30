@@ -116,7 +116,8 @@ func (h *CoreHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CoreHandler) JoinRoom(w http.ResponseWriter, r *http.Request) {
-	roomID := r.URL.Query().Get("room_id")
+	// Get roomId from URL path parameter (matches router: /join-room/{roomId})
+	roomID := chi.URLParam(r, "roomId")
 	if roomID == "" {
 		util.WriteErrorResponse(w, http.StatusBadRequest, "Room ID is required")
 		return
