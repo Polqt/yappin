@@ -8,10 +8,7 @@
 	import MessageInput from '$lib/components/chat/MessageInput.svelte';
 	import type { Message, Room } from '$lib/types/room';
 
-	// Get room ID from URL
 	let roomId = $page.params.id || '';
-
-	// State variables
 	let messageInput = '';
 	let messages: Message[] = [];
 	let messagesContainer: HTMLDivElement;
@@ -19,70 +16,57 @@
 	let room: Room | null = null;
 	let loadingRoom = true;
 
-	// Connect to WebSocket when component mounts
+	// Load room data and connect to WebSocket
 	onMount(async () => {
-		console.log('Room page mounted. RoomId:', roomId, 'Username:', $auth.user?.username);
-
-		// Wait for auth to be ready
+		// Wait for auth to load
 		if ($auth.loading) {
-			console.log('Waiting for auth to load...');
 			await new Promise((resolve) => setTimeout(resolve, 100));
 		}
 
-		// Fetch room details first
-		try {
-			room = await roomService.getRoomById(roomId);
-			loadingRoom = false;
-			console.log('Room loaded:', room?.name);
-		} catch (error) {
-			console.error('Failed to load room:', error);
-			loadingRoom = false;
-		}
-
-		// Ensure we have valid roomId and username before connecting
+		// Validate roomId
 		if (!roomId || roomId === 'undefined') {
 			console.error('Invalid roomId:', roomId);
 			return;
 		}
 
+		// Load room details
+		try {
+			room = await roomService.getRoomById(roomId);
+		} catch (error) {
+			console.error('Failed to load room:', error);
+		} finally {
+			loadingRoom = false;
+		}
+
+		// Connect to WebSocket
 		const username = $auth.user?.username || 'Guest';
 		const userId = $auth.user?.id;
-		console.log('Connecting with roomId:', roomId, 'username:', username, 'userId:', userId);
-
-		// Then connect to WebSocket
 		websocket.connect(roomId, username, userId);
-
-		const unsubscribe = websocket.subscribe((state) => {
-			messages = state.messages;
-			isConnected = state.connected;
-
-			// Auto-scroll to bottom
-			if (messagesContainer) {
-				setTimeout(() => {
-					messagesContainer.scrollTop = messagesContainer.scrollHeight;
-				}, 50);
-			}
-		});
-
-		return unsubscribe;
 	});
 
-	// Disconnect when leaving page
+	// Subscribe to WebSocket state changes
+	$: {
+		const state = $websocket;
+		messages = state.messages;
+		isConnected = state.connected;
+
+		// Auto-scroll to bottom when messages change
+		if (messagesContainer && messages.length > 0) {
+			setTimeout(() => {
+				messagesContainer.scrollTop = messagesContainer.scrollHeight;
+			}, 50);
+		}
+	}
+
+	// Cleanup on component destroy
 	onDestroy(() => {
-		console.log('Room page destroyed, disconnecting WebSocket');
 		websocket.disconnect();
 	});
 
-	// Send message handler
+	// Send message
 	function sendMessage() {
-		console.log('sendMessage called. messageInput:', messageInput);
-		if (!messageInput.trim()) {
-			console.log('Message is empty, returning');
-			return;
-		}
-		console.log('Calling websocket.sendMessage with:', messageInput);
+		if (!messageInput.trim()) return;
 		websocket.sendMessage(messageInput);
-		console.log('Message sent, clearing input');
 		messageInput = '';
 	}
 </script>
