@@ -21,17 +21,35 @@
 
 	// Connect to WebSocket when component mounts
 	onMount(async () => {
+		console.log('Room page mounted. RoomId:', roomId, 'Username:', $auth.user?.username);
+
+		// Wait for auth to be ready
+		if ($auth.loading) {
+			console.log('Waiting for auth to load...');
+			await new Promise((resolve) => setTimeout(resolve, 100));
+		}
+
 		// Fetch room details first
 		try {
 			room = await roomService.getRoomById(roomId);
 			loadingRoom = false;
+			console.log('Room loaded:', room?.name);
 		} catch (error) {
 			console.error('Failed to load room:', error);
 			loadingRoom = false;
 		}
 
+		// Ensure we have valid roomId and username before connecting
+		if (!roomId || roomId === 'undefined') {
+			console.error('Invalid roomId:', roomId);
+			return;
+		}
+
+		const username = $auth.user?.username || 'Guest';
+		console.log('Connecting with roomId:', roomId, 'username:', username);
+
 		// Then connect to WebSocket
-		websocket.connect(roomId, $auth.user?.username || 'Guest');
+		websocket.connect(roomId, username);
 
 		const unsubscribe = websocket.subscribe((state) => {
 			messages = state.messages;
@@ -50,13 +68,20 @@
 
 	// Disconnect when leaving page
 	onDestroy(() => {
+		console.log('Room page destroyed, disconnecting WebSocket');
 		websocket.disconnect();
 	});
 
 	// Send message handler
 	function sendMessage() {
-		if (!messageInput.trim()) return;
+		console.log('sendMessage called. messageInput:', messageInput);
+		if (!messageInput.trim()) {
+			console.log('Message is empty, returning');
+			return;
+		}
+		console.log('Calling websocket.sendMessage with:', messageInput);
 		websocket.sendMessage(messageInput);
+		console.log('Message sent, clearing input');
 		messageInput = '';
 	}
 </script>

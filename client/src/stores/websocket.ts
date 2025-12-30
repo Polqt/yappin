@@ -18,6 +18,12 @@ function createWebSocketStore() {
 	let socket: WebSocket | null = null;
 
 	const connect = (roomId: string, username: string) => {
+		// Close existing connection if any
+		if (socket && socket.readyState === WebSocket.OPEN) {
+			console.log('Closing existing WebSocket connection');
+			socket.close();
+		}
+
 		const wsUrl = `${WS_BASE_URL}${API_ENDPOINTS.rooms.join(roomId)}?username=${encodeURIComponent(username)}`;
 
 		console.log('Connecting to WebSocket:', wsUrl);
@@ -25,7 +31,7 @@ function createWebSocketStore() {
 		socket = new WebSocket(wsUrl);
 
 		socket.onopen = () => {
-			console.log('WebSocket connected!');
+			console.log('WebSocket connected successfully');
 			update((state) => ({
 				...state,
 				connected: true,
@@ -47,7 +53,7 @@ function createWebSocketStore() {
 		};
 
 		socket.onclose = (event) => {
-			console.log('WebSocket closed:', event.code, event.reason);
+			console.log('WebSocket closed. Code:', event.code, 'Reason:', event.reason || 'None');
 			update((state) => ({ ...state, connected: false }));
 		};
 
@@ -70,10 +76,16 @@ function createWebSocketStore() {
 	};
 
 	const sendMessage = (content: string) => {
+		console.log('sendMessage called in websocket store. Content:', content);
+		console.log('Socket state:', socket?.readyState);
+		console.log('WebSocket.OPEN constant:', WebSocket.OPEN);
+
 		if (socket?.readyState === WebSocket.OPEN) {
+			console.log('Sending message:', content);
 			socket.send(content);
+			console.log('Message sent successfully');
 		} else {
-			console.error('WebSocket is not open');
+			console.error('WebSocket is not open. Current state:', socket?.readyState);
 			update((state) => ({
 				...state,
 				error: 'Cannot send message: not connected'

@@ -8,9 +8,13 @@
 	let error = '';
 
 	onMount(async () => {
+		loading = true;
+		error = '';
+		console.log('Dashboard mounted, loading rooms');
 		try {
 			const fetchedRooms = await roomService.getRooms();
 			rooms.set(fetchedRooms);
+			console.log('Rooms loaded:', fetchedRooms.length);
 		} catch (err) {
 			error = 'Failed to load rooms';
 			console.error('Failed to load rooms:', err);

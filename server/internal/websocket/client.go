@@ -2,27 +2,28 @@ package websocket
 
 import (
 	"log"
+
 	"github.com/gorilla/websocket"
 )
 
 type Client struct {
-	Conn *websocket.Conn
-	Message chan *Message
-	ID string `json:"id"`
-	RoomID string `json:"room_id"`
+	Conn     *websocket.Conn
+	Message  chan *Message
+	ID       string `json:"id"`
+	RoomID   string `json:"room_id"`
 	Username string `json:"username"`
 }
 
 type Message struct {
-	Content string `json:"content"`
-	RoomID string `json:"room_id"`
+	Content  string `json:"content"`
+	RoomID   string `json:"room_id"`
 	Username string `json:"username"`
-	UserID string `json:"user_id,omitempty"`
-	System bool `json:"system"`
+	UserID   string `json:"user_id,omitempty"`
+	System   bool   `json:"system"`
 }
 
 func (c *Client) ReadMessage(core *Core) {
-	defer func()  {
+	defer func() {
 		core.Unregister <- c
 		c.Conn.Close()
 	}()
@@ -35,20 +36,23 @@ func (c *Client) ReadMessage(core *Core) {
 			}
 			break
 		}
-		
+
+		log.Printf("Received message from client %s in room %s: %s", c.Username, c.RoomID, string(message))
+
 		msg := &Message{
-			Content: string(message),
-			RoomID: c.RoomID,
+			Content:  string(message),
+			RoomID:   c.RoomID,
 			Username: c.Username,
-			UserID: c.ID,
+			UserID:   c.ID,
 		}
 
+		log.Printf("Broadcasting message: %+v", msg)
 		core.Broadcast <- msg
 	}
 }
 
 func (c *Client) WriteMessage() {
-	defer func()  {
+	defer func() {
 		c.Conn.Close()
 	}()
 
@@ -57,7 +61,7 @@ func (c *Client) WriteMessage() {
 		if !ok {
 			return
 		}
-
+		log.Printf("Sending message to client %s: %+v", c.Username, message)
 		if err := c.Conn.WriteJSON(message); err != nil {
 			log.Printf("error writing message: %v", err)
 			return

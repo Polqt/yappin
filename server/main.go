@@ -66,6 +66,10 @@ func main() {
 		log.Printf("Failed to refresh pinned rooms: %v", err)
 	}
 
+	// Start WebSocket core to process messages
+	log.Println("Starting WebSocket core...")
+	go webService.Start()
+
 	go startRoomCleanup(dbConn, webService)
 
 	rateLimiter := middleware.NewRateLimiter(100, time.Minute)

@@ -116,9 +116,14 @@ func (h *CoreHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CoreHandler) JoinRoom(w http.ResponseWriter, r *http.Request) {
+	log.Printf("JoinRoom called: Method=%s Path=%s", r.Method, r.URL.Path)
+
 	// Get roomId from URL path parameter (matches router: /join-room/{roomId})
 	roomID := chi.URLParam(r, "roomId")
+	log.Printf("roomID from path param: %s", roomID)
+
 	if roomID == "" {
+		log.Printf("Room ID is empty")
 		util.WriteErrorResponse(w, http.StatusBadRequest, "Room ID is required")
 		return
 	}
@@ -166,9 +171,12 @@ func (h *CoreHandler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
+		log.Printf("Failed to upgrade WebSocket connection: %v", err)
 		util.WriteErrorResponse(w, http.StatusInternalServerError, "Failed to upgrade connection")
 		return
 	}
+
+	log.Printf("WebSocket connection upgraded successfully")
 
 	q := r.URL.Query()
 	clientID := q.Get("client_id")
@@ -189,6 +197,7 @@ func (h *CoreHandler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 		Username: username,
 	}
 
+	log.Printf("Registering client: ID=%s Username=%s RoomID=%s", clientID, username, roomID)
 	h.core.Register <- cl
 
 	go cl.WriteMessage()

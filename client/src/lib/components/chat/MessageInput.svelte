@@ -6,8 +6,17 @@
 	function handleKeyDown(event: KeyboardEvent) {
 		if (event.key === 'Enter' && !event.shiftKey) {
 			event.preventDefault();
+			console.log('Enter key pressed, calling onSendMessage');
 			onSendMessage();
 		}
+	}
+
+	function handleClick() {
+		console.log('Send button clicked');
+		console.log('Value:', value);
+		console.log('isConnected:', isConnected);
+		console.log('onSendMessage:', onSendMessage);
+		onSendMessage();
 	}
 </script>
 
@@ -23,7 +32,7 @@
 		/>
 
 		<button
-			on:click={onSendMessage}
+			on:click={handleClick}
 			disabled={!isConnected || !value.trim()}
 			class="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
 		>
