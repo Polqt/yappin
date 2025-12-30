@@ -46,10 +46,11 @@
 		}
 
 		const username = $auth.user?.username || 'Guest';
-		console.log('Connecting with roomId:', roomId, 'username:', username);
+		const userId = $auth.user?.id;
+		console.log('Connecting with roomId:', roomId, 'username:', username, 'userId:', userId);
 
 		// Then connect to WebSocket
-		websocket.connect(roomId, username);
+		websocket.connect(roomId, username, userId);
 
 		const unsubscribe = websocket.subscribe((state) => {
 			messages = state.messages;

@@ -17,14 +17,17 @@ function createWebSocketStore() {
 
 	let socket: WebSocket | null = null;
 
-	const connect = (roomId: string, username: string) => {
+	const connect = (roomId: string, username: string, userId?: string) => {
 		// Close existing connection if any
 		if (socket && socket.readyState === WebSocket.OPEN) {
 			console.log('Closing existing WebSocket connection');
 			socket.close();
 		}
 
-		const wsUrl = `${WS_BASE_URL}${API_ENDPOINTS.rooms.join(roomId)}?username=${encodeURIComponent(username)}`;
+		let wsUrl = `${WS_BASE_URL}${API_ENDPOINTS.rooms.join(roomId)}?username=${encodeURIComponent(username)}`;
+		if (userId) {
+			wsUrl += `&client_id=${encodeURIComponent(userId)}`;
+		}
 
 		console.log('Connecting to WebSocket:', wsUrl);
 
