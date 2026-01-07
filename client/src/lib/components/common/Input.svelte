@@ -18,7 +18,7 @@
 
 <div class="mb-4">
 	{#if label}
-		<label for={inputId} class="mb-1 block text-sm font-medium text-gray-700">
+		<label for={inputId} class="mb-2 block text-sm font-medium text-neutral-300">
 			{label}
 		</label>
 	{/if}
@@ -34,8 +34,8 @@
 			{placeholder}
 			{required}
 			{disabled}
-			class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 {error
-				? 'border-red-500'
+			class="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-neutral-500 backdrop-blur-sm transition focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 {error
+				? 'border-red-500/50'
 				: ''}"
 		/>
 		{#if type === 'password'}
@@ -46,14 +46,14 @@
 				aria-label={showPassword ? 'Hide password' : 'Show password'}
 			>
 				{#if showPassword}
-					<EyeOff class="h-5 w-5 text-gray-400" />
+					<EyeOff class="h-5 w-5 text-neutral-400" />
 				{:else}
-					<Eye class="h-5 w-5 text-gray-400" />
+					<Eye class="h-5 w-5 text-neutral-400" />
 				{/if}
 			</button>
 		{/if}
 	</div>
 	{#if error}
-		<p class="mt-1 text-sm text-red-600">{error}</p>
+		<p class="mt-1 text-sm text-red-400">{error}</p>
 	{/if}
 </div>

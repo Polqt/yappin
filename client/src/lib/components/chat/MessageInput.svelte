@@ -20,21 +20,21 @@
 	}
 </script>
 
-<div class="border-t border-gray-200 bg-white p-4 shadow-lg">
+<div class="border-t border-white/10 bg-neutral-950/80 p-4 backdrop-blur-xl">
 	<div class="mx-auto flex max-w-4xl gap-2">
 		<input
 			type="text"
 			bind:value
 			on:keydown={handleKeyDown}
 			placeholder={isConnected ? 'Type a message...' : 'Connecting...'}
-			class="flex-1 rounded-lg border border-gray-300 px-4 py-2 transition focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+			class="flex-1 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder-neutral-500 backdrop-blur-sm transition focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50"
 			disabled={!isConnected}
 		/>
 
 		<button
 			on:click={handleClick}
 			disabled={!isConnected || !value.trim()}
-			class="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+			class="rounded-lg bg-white px-6 py-2 font-medium text-neutral-950 transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
 		>
 			Send
 		</button>

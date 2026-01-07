@@ -5,60 +5,67 @@
 
 	async function handleLogout() {
 		await auth.logout();
-		goto('/login');
+		goto('/');
 	}
 </script>
 
-<header class="bg-white shadow-md">
+<header class="border-b border-white/10 bg-neutral-950/80 backdrop-blur-xl">
 	<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 		<div class="flex h-16 items-center justify-between">
 			<!-- Logo -->
 			<div class="flex items-center">
-				<a href="/dashboard" class="flex items-center gap-2">
-					<MessageCircle class="h-8 w-8 text-blue-600" />
-					<span class="text-2xl font-bold text-gray-900">Yappin</span>
+				<a href="/" class="flex items-center gap-2">
+					<MessageCircle class="h-6 w-6 text-white" strokeWidth={1.5} />
+					<span class="text-lg font-light text-white">Yappin</span>
 				</a>
 			</div>
 
 			<!-- Navigation -->
 			{#if $auth.user}
-				<nav class="flex items-center gap-6">
+				<nav class="flex items-center gap-1">
 					<a
 						href="/dashboard"
-						class="flex items-center gap-1 text-gray-700 transition hover:text-blue-600"
+						class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-400 transition hover:bg-white/5 hover:text-white"
 					>
-						<MessageCircle class="h-5 w-5" />
+						<MessageCircle class="h-4 w-4" strokeWidth={1.5} />
 						<span class="hidden sm:inline">Rooms</span>
 					</a>
 					<a
 						href="/dashboard/leaderboard"
-						class="flex items-center gap-1 text-gray-700 transition hover:text-blue-600"
+						class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-400 transition hover:bg-white/5 hover:text-white"
 					>
-						<Trophy class="h-5 w-5" />
+						<Trophy class="h-4 w-4" strokeWidth={1.5} />
 						<span class="hidden sm:inline">Leaderboard</span>
 					</a>
 					<a
 						href="/profile"
-						class="flex items-center gap-1 text-gray-700 transition hover:text-blue-600"
+						class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-400 transition hover:bg-white/5 hover:text-white"
 					>
-						<User class="h-5 w-5" />
+						<User class="h-4 w-4" strokeWidth={1.5} />
 						<span class="hidden sm:inline">Profile</span>
 					</a>
+
+					<div class="mx-2 h-6 w-px bg-white/10"></div>
+
 					<button
 						on:click={handleLogout}
-						class="flex items-center gap-1 text-gray-700 transition hover:text-red-600"
+						class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-400 transition hover:bg-white/5 hover:text-red-400"
 					>
-						<LogOut class="h-5 w-5" />
+						<LogOut class="h-4 w-4" strokeWidth={1.5} />
 						<span class="hidden sm:inline">Logout</span>
 					</button>
 
-					<div class="ml-4 flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1">
+					<div
+						class="ml-2 flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5"
+					>
 						<div
-							class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white"
+							class="flex h-7 w-7 items-center justify-center rounded-full bg-white text-xs font-medium text-neutral-950"
 						>
 							{$auth.user.username.charAt(0).toUpperCase()}
 						</div>
-						<span class="hidden font-medium text-gray-900 sm:inline">{$auth.user.username}</span>
+						<span class="hidden text-sm font-medium text-white sm:inline"
+							>{$auth.user.username}</span
+						>
 					</div>
 				</nav>
 			{/if}

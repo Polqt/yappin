@@ -8,9 +8,9 @@
 		'px-4 py-2 rounded-md font-medium transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
 
 	const variantClasses = {
-		primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-		secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500',
-		danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500'
+		primary: 'bg-white text-neutral-950 hover:bg-neutral-100 focus:ring-white/50 font-medium',
+		secondary: 'bg-white/5 text-white border border-white/10 hover:bg-white/10 focus:ring-white/20',
+		danger: 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-500/50'
 	};
 
 	$: buttonClasses = [
