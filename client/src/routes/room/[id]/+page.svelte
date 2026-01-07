@@ -74,30 +74,38 @@
 <!-- Connection status indicator -->
 <div class="fixed right-4 top-4 z-50">
 	{#if isConnected}
-		<div class="rounded-lg bg-green-500 px-4 py-2 text-white shadow-lg">● Connected</div>
+		<div
+			class="rounded-lg border border-green-500/20 bg-green-500/10 px-4 py-2 text-green-200 backdrop-blur-sm"
+		>
+			● Connected
+		</div>
 	{:else}
-		<div class="rounded-lg bg-red-500 px-4 py-2 text-white shadow-lg">● Disconnected</div>
+		<div
+			class="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2 text-red-200 backdrop-blur-sm"
+		>
+			● Disconnected
+		</div>
 	{/if}
 </div>
 
 <!-- Main chat container -->
-<div class="flex h-screen flex-col bg-gray-100">
+<div class="flex h-screen flex-col bg-neutral-950">
 	<!-- Header -->
-	<div class="bg-white p-4 shadow-md">
+	<div class="border-b border-white/10 bg-neutral-950/80 p-4 backdrop-blur-xl">
 		<div class="mx-auto flex max-w-4xl items-center justify-between">
 			{#if loadingRoom}
-				<h1 class="text-2xl font-bold text-gray-800">Loading room...</h1>
+				<h1 class="text-xl font-light text-white">Loading room...</h1>
 			{:else if room}
 				<div>
-					<h1 class="text-2xl font-bold text-gray-800">{room.name}</h1>
+					<h1 class="text-xl font-medium text-white">{room.name}</h1>
 					{#if room.topic_description}
-						<p class="text-sm text-gray-600">{room.topic_description}</p>
+						<p class="text-sm text-neutral-400">{room.topic_description}</p>
 					{/if}
 				</div>
 			{:else}
-				<h1 class="text-2xl font-bold text-gray-800">Room not found</h1>
+				<h1 class="text-xl font-light text-white">Room not found</h1>
 			{/if}
-			<a href="/dashboard" class="text-blue-600 transition hover:text-blue-800">
+			<a href="/dashboard" class="text-sm text-neutral-400 transition hover:text-white">
 				← Back to Dashboard
 			</a>
 		</div>

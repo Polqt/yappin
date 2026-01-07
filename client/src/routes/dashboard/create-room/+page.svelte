@@ -33,17 +33,17 @@
 	}
 </script>
 
-<div class="flex min-h-screen items-center justify-center bg-gray-100">
-	<div class="w-full max-w-md rounded-lg bg-white p-8 shadow-xl">
+<div class="flex min-h-screen items-center justify-center bg-neutral-950 px-4">
+	<div class="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl">
 		<div class="mb-8 text-center">
-			<h2 class="mt-4 text-3xl font-bold text-gray-900">Create a New Room</h2>
-			<p class="mt-2 text-sm text-gray-600">Start a new conversation.</p>
+			<h2 class="mt-4 text-2xl font-light text-white">Create a New Room</h2>
+			<p class="mt-2 text-sm text-neutral-400">Start a new conversation.</p>
 		</div>
 
 		<form class="space-y-6" on:submit|preventDefault={handleSubmit}>
 			{#if error}
-				<div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-					<p class="text-sm">{error}</p>
+				<div class="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3">
+					<p class="text-sm text-red-200">{error}</p>
 				</div>
 			{/if}
 
@@ -62,10 +62,7 @@
 			</Button>
 		</form>
 		<div class="mt-6 text-center">
-			<a
-				href="/dashboard"
-				class="font-medium text-blue-600 transition duration-200 hover:text-blue-500"
-			>
+			<a href="/dashboard" class="text-sm font-medium text-neutral-400 transition hover:text-white">
 				Back to Dashboard
 			</a>
 		</div>

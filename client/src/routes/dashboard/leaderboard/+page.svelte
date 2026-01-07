@@ -1,82 +1,97 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
-    import { API_BASE_URL } from '$lib/constants/api';
+	import { onMount } from 'svelte';
+	import { API_BASE_URL } from '$lib/constants/api';
 	import type { LeaderboardEntry } from '$lib/types/leaderboard';
 	import { getMedal } from '$lib/utils/leaderboard';
+	import Header from '$lib/components/layout/Header.svelte';
 
-    
-    // Component state
-    let leaderboard: LeaderboardEntry[] = [];
-    let loading = true;
-    let error = '';
-    
-    // Fetch leaderboard when component loads
-    onMount(async () => {
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/stats/leaderboard?limit=100`, {
-                credentials: 'include'  // Send cookies
-            });
-            
-            if (!response.ok) throw new Error('Failed to fetch');
-            
-            leaderboard = await response.json();
-        } catch (err) {
-            error = 'Failed to load leaderboard';
-            console.error(err);
-        } finally {
-            loading = false;
-        }
-    });
+	// Component state
+	let leaderboard: LeaderboardEntry[] = [];
+	let loading = true;
+	let error = '';
 
+	// Fetch leaderboard when component loads
+	onMount(async () => {
+		try {
+			const response = await fetch(`${API_BASE_URL}/api/stats/leaderboard?limit=100`, {
+				credentials: 'include' // Send cookies
+			});
+
+			if (!response.ok) throw new Error('Failed to fetch');
+
+			leaderboard = await response.json();
+		} catch (err) {
+			error = 'Failed to load leaderboard';
+			console.error(err);
+		} finally {
+			loading = false;
+		}
+	});
 </script>
 
-<div class="max-w-4xl mx-auto p-8">
-    <h1 class="text-4xl font-bold mb-8 text-center">🏆 Leaderboard</h1>
-    
-    {#if loading}
-        <div class="text-center py-12">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-            <p class="mt-4 text-gray-600">Loading...</p>
-        </div>
-    {:else if error}
-        <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-            {error}
-        </div>
-    {:else}
-        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-            <table class="w-full">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rank</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Messages</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Upvotes</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Streak</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    {#each leaderboard as user, index}
-                        <tr class:bg-yellow-50={user.rank <= 3} class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="text-2xl">{getMedal(user.rank)}</span>
-                                <span class="ml-2 font-semibold">#{user.rank}</span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
-                                {user.username}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600">
-                                {user.total_messaes}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600">
-                                {user.total_upvotes} 👍
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-gray-600">
-                                {user.daily_streak} 🔥
-                            </td>
-                        </tr>
-                    {/each}
-                </tbody>
-            </table>
-        </div>
-    {/if}
+<div class="min-h-screen bg-neutral-950">
+	<Header />
+
+	<div class="mx-auto max-w-6xl p-6 sm:p-8">
+		<h1 class="mb-8 text-center text-2xl font-light text-white">🏆 Leaderboard</h1>
+
+		{#if loading}
+			<div class="py-12 text-center">
+				<div
+					class="mx-auto h-12 w-12 animate-spin rounded-full border-2 border-white/20 border-t-white"
+				></div>
+				<p class="mt-4 text-sm text-neutral-400">Loading...</p>
+			</div>
+		{:else if error}
+			<div class="rounded-lg border border-red-500/20 bg-red-500/10 p-4">
+				<p class="text-sm text-red-200">{error}</p>
+			</div>
+		{:else}
+			<div class="overflow-hidden rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm">
+				<table class="w-full">
+					<thead class="border-b border-white/10 bg-white/5">
+						<tr>
+							<th class="px-6 py-3 text-left text-xs font-medium uppercase text-neutral-400"
+								>Rank</th
+							>
+							<th class="px-6 py-3 text-left text-xs font-medium uppercase text-neutral-400"
+								>User</th
+							>
+							<th class="px-6 py-3 text-right text-xs font-medium uppercase text-neutral-400"
+								>Messages</th
+							>
+							<th class="px-6 py-3 text-right text-xs font-medium uppercase text-neutral-400"
+								>Upvotes</th
+							>
+							<th class="px-6 py-3 text-right text-xs font-medium uppercase text-neutral-400"
+								>Streak</th
+							>
+						</tr>
+					</thead>
+					<tbody class="divide-y divide-white/10">
+						{#each leaderboard as user}
+							<tr class="transition-colors hover:bg-white/10 {user.rank <= 3 ? 'bg-white/5' : ''}">
+								<td class="whitespace-nowrap px-6 py-4">
+									<span class="text-2xl">{getMedal(user.rank)}</span>
+									<span class="ml-2 font-medium text-white">#{user.rank}</span>
+								</td>
+								<td class="whitespace-nowrap px-6 py-4 font-medium text-white">
+									{user.username}
+								</td>
+								<td class="whitespace-nowrap px-6 py-4 text-right text-neutral-400">
+									{user.total_messaes}
+								</td>
+								<td class="whitespace-nowrap px-6 py-4 text-right text-neutral-400">
+									{user.total_upvotes} 👍
+								</td>
+								<td class="whitespace-nowrap px-6 py-4 text-right text-neutral-400">
+									{user.daily_streak} 🔥
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+		{/if}
+	</div>
 </div>
