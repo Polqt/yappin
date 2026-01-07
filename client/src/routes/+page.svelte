@@ -1,143 +1,86 @@
 <script lang="ts">
-  import { page } from '$app/stores'; 
-  import { onMount, onDestroy } from 'svelte'; 
-  import { websocket } from '$stores/websocket'; 
-  import type { Message } from '$lib/types/room';
 	import { auth } from '$stores/auth';
-  
-  // Get room ID from URL parameter
-  let roomId = $page.params.id;
-  
-  let messageInput = ''; 
-  let messages: Message[] = [];
-  let messagesContainer: HTMLDivElement;
-  let isConnected = false;
-  
-  // onMount runs when component first appears
-  onMount(() => {
-    // Connect to WebSocket when page loads
-    websocket.connect(roomId);
-    
-    // Subscribe to WebSocket state changes
-    const unsubscribe = websocket.subscribe((state) => {
-      messages = state.messages;
-      isConnected = state.connected; 
-      
-      // Auto-scroll to bottom when new message arrives
-      if (messagesContainer) {
-        setTimeout(() => {
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }, 50);
-      }
-    });
-    
-    // Return cleanup function
-    return unsubscribe;
-  });
-  
-  // onDestroy runs when component is removed
-  onDestroy(() => {
-    websocket.disconnect(); 
-  });
-  
-  // Send message function
-  function sendMessage() {
-    if (!messageInput.trim()) return; // Don't send empty messages
-    
-    websocket.sendMessage(messageInput); // Send to server via WebSocket
-    messageInput = '';
-  }
-  
-  // Send message when Enter key is pressed
-  function handleKeydown(event: KeyboardEvent) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault(); 
-      sendMessage();
-    }
-  }
+	import { MessageCircle, ArrowRight } from 'lucide-svelte';
 </script>
 
-<div class="fixed top-4 right-4 z-50">
-  {#if isConnected}
-    <div class="bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg">
-      ● Connected
-    </div>
-  {:else}
-    <div class="bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg">
-      ● Disconnected
-    </div>
-  {/if}
-</div>
+<div class="relative min-h-screen overflow-hidden bg-neutral-950">
+	<div class="absolute inset-0 bg-gradient-to-br from-neutral-900 via-neutral-950 to-black"></div>
 
-<!-- Main chat container -->
-<div class="flex flex-col h-screen bg-gray-100">
-  <!-- Header -->
-  <div class="bg-white shadow-md p-4">
-    <div class="max-w-4xl mx-auto flex items-center justify-between">
-      <h1 class="text-2xl font-bold text-gray-800">Room: {roomId}</h1>
-      <a 
-        href="/dashboard" 
-        class="text-blue-600 hover:text-blue-800"
-      >
-        ← Back to Dashboard
-      </a>
-    </div>
-  </div>
-  
-  <!-- Messages area -->
-  <div 
-    bind:this={messagesContainer}
-    class="flex-1 overflow-y-auto p-4"
-  >
-    <div class="max-w-4xl mx-auto space-y-4">
-      {#each messages as message}
-        <div 
-          class="bg-white rounded-lg shadow p-4"
-          class:bg-blue-50={message.user_id === $auth.user?.id}
-        >
-          <!-- Username -->
-          <div class="font-semibold text-sm text-gray-700 mb-1">
-            {message.username}
-          </div>
-          
-          <!-- Message content -->
-          <div class="text-gray-900">
-            {message.content}
-          </div>
-          
-          <!-- Timestamp  -->
-          <div class="text-xs text-gray-500 mt-2">
-            {new Date(message.created_at).toLocaleTimeString()}
-          </div>
-        </div>
-      {/each}
-      
-      {#if messages.length === 0}
-        <div class="text-center text-gray-500 mt-8">
-          No messages yet. Start the conversation!
-        </div>
-      {/if}
-    </div>
-  </div>
-  
-  <!-- Message input area -->
-  <div class="bg-white border-t border-gray-200 p-4">
-    <div class="max-w-4xl mx-auto flex gap-2">
-      <input
-        type="text"
-        bind:value={messageInput}
-        on:keydown={handleKeydown}
-        placeholder="Type a message..."
-        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        disabled={!isConnected}
-      />
-      <button
-        on:click={sendMessage}
-        disabled={!isConnected || !messageInput.trim()}
-        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
-      >
-        Send
-      </button>
-    </div>
-  </div>
+	<div
+		class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-40"
+	></div>
+
+	<div class="relative z-10 flex min-h-screen flex-col items-center justify-center px-4">
+		<!-- Logo and Brand -->
+		<div class="mb-12 text-center">
+			<div
+				class="mb-6 inline-flex items-center justify-center rounded-2xl bg-white/5 p-6 backdrop-blur-sm"
+			>
+				<MessageCircle class="h-16 w-16 text-white" strokeWidth={1.5} />
+			</div>
+			<h1 class="mb-3 text-7xl font-light tracking-tight text-white">Yappin</h1>
+			<p class="text-lg font-light text-neutral-400">Real-time conversations, simplified</p>
+		</div>
+
+		<!-- CTA Buttons -->
+		<div class="flex flex-col gap-4 sm:flex-row">
+			{#if $auth.loading}
+				<div
+					class="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-8 py-4 backdrop-blur-sm"
+				>
+					<div
+						class="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white"
+					></div>
+					<span class="text-sm font-medium text-white">Loading...</span>
+				</div>
+			{:else if $auth.user}
+				<a
+					href="/dashboard"
+					class="group flex items-center gap-3 rounded-xl border border-white/10 bg-white px-8 py-4 transition-all hover:bg-white/95"
+				>
+					<span class="text-sm font-medium text-neutral-950">Go to Dashboard</span>
+					<ArrowRight
+						class="h-4 w-4 text-neutral-950 transition-transform group-hover:translate-x-1"
+					/>
+				</a>
+			{:else}
+				<a
+					href="/login"
+					class="group flex items-center gap-3 rounded-xl border border-white/10 bg-white px-8 py-4 transition-all hover:bg-white/95"
+				>
+					<span class="text-sm font-medium text-neutral-950">Sign In</span>
+					<ArrowRight
+						class="h-4 w-4 text-neutral-950 transition-transform group-hover:translate-x-1"
+					/>
+				</a>
+				<a
+					href="/signup"
+					class="flex items-center gap-3 rounded-xl border border-white/20 bg-white/5 px-8 py-4 backdrop-blur-sm transition-all hover:border-white/30 hover:bg-white/10"
+				>
+					<span class="text-sm font-medium text-white">Create Account</span>
+				</a>
+			{/if}
+		</div>
+
+		<!-- Features -->
+		<div class="mt-24 grid max-w-4xl grid-cols-1 gap-6 sm:grid-cols-3">
+			<div class="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+				<div class="mb-3 text-3xl">⚡</div>
+				<h3 class="mb-2 text-sm font-medium text-white">Real-time</h3>
+				<p class="text-xs font-light text-neutral-400">
+					Instant messaging with WebSocket technology
+				</p>
+			</div>
+			<div class="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+				<div class="mb-3 text-3xl">🔒</div>
+				<h3 class="mb-2 text-sm font-medium text-white">Secure</h3>
+				<p class="text-xs font-light text-neutral-400">End-to-end encrypted conversations</p>
+			</div>
+			<div class="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+				<div class="mb-3 text-3xl">🎯</div>
+				<h3 class="mb-2 text-sm font-medium text-white">Simple</h3>
+				<p class="text-xs font-light text-neutral-400">Clean interface, zero distractions</p>
+			</div>
+		</div>
+	</div>
 </div>

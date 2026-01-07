@@ -3,6 +3,7 @@
 	import { rooms } from '$stores/room';
 	import { roomService } from '$services/room';
 	import { goto } from '$app/navigation';
+	import Header from '$lib/components/layout/Header.svelte';
 
 	let loading = true;
 	let error = '';
@@ -32,66 +33,77 @@
 	}
 </script>
 
-<main class="min-h-screen bg-gray-100 p-8">
-	<div class="mx-auto max-w-4xl">
-		<div class="mb-8 flex items-center justify-between">
-			<h1 class="text-3xl font-bold text-gray-800">Room Dashboard</h1>
-			<a
-				href="/dashboard/create-room"
-				class="rounded bg-green-500 px-4 py-2 text-white transition-colors hover:bg-green-600"
-			>
-				Create Room
-			</a>
-		</div>
+<div class="min-h-screen bg-neutral-950">
+	<Header />
 
-		{#if loading}
-			<div class="py-12 text-center">
-				<p class="text-gray-600">Loading rooms...</p>
+	<main class="p-6 sm:p-8">
+		<div class="mx-auto max-w-7xl">
+			<div class="mb-8 flex items-center justify-between">
+				<h1 class="text-2xl font-light text-white">Rooms</h1>
+				<a
+					href="/dashboard/create-room"
+					class="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/10"
+				>
+					+ New Room
+				</a>
 			</div>
-		{:else if error}
-			<div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-				<p class="text-sm">{error}</p>
-			</div>
-		{:else if $rooms.length === 0}
-			<div class="py-12 text-center">
-				<p class="text-gray-600">No rooms available. Create one to get started!</p>
-			</div>
-		{:else}
-			<div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-				{#each $rooms as room}
-					<div class="rounded-lg bg-white p-6 shadow-md">
-						<div class="mb-2 flex items-center justify-between">
-							<h2 class="text-xl font-semibold text-gray-800">{room.name}</h2>
-							{#if room.is_pinned}
-								<span class="text-lg" title="Pinned Room">📌</span>
-							{/if}
-						</div>
-						{#if room.topic_description}
-							<p class="mb-4 text-gray-600">{room.topic_description}</p>
-						{/if}
-						<div class="mb-4 space-y-1 text-sm text-gray-500">
-							{#if room.creator_username}
-								<p>
-									Created by: <span class="font-medium text-gray-700">{room.creator_username}</span>
-								</p>
-							{:else}
-								<p>Created: {new Date(room.created_at).toLocaleDateString()}</p>
-							{/if}
-							<p>
-								Participants: <span class="font-medium text-gray-700">{room.participants}</span>
-							</p>
-							<p class="text-xs">Expires: {new Date(room.expires_at).toLocaleDateString()}</p>
-						</div>
-						<button
-							type="button"
-							on:click={() => handleJoinRoom(room.id)}
-							class="w-full rounded bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
+
+			{#if loading}
+				<div class="py-12 text-center">
+					<div
+						class="mx-auto h-12 w-12 animate-spin rounded-full border-2 border-white/20 border-t-white"
+					></div>
+					<p class="mt-4 text-sm text-neutral-400">Loading rooms...</p>
+				</div>
+			{:else if error}
+				<div class="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3">
+					<p class="text-sm text-red-200">{error}</p>
+				</div>
+			{:else if $rooms.length === 0}
+				<div class="rounded-xl border border-white/10 bg-white/5 p-12 text-center backdrop-blur-sm">
+					<p class="text-lg font-light text-white">No rooms available</p>
+					<p class="mt-2 text-sm text-neutral-400">Create one to get started</p>
+				</div>
+			{:else}
+				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+					{#each $rooms as room}
+						<div
+							class="group rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm transition hover:border-white/20 hover:bg-white/10"
 						>
-							Join Room
-						</button>
-					</div>
-				{/each}
-			</div>
-		{/if}
-	</div>
-</main>
+							<div class="mb-3 flex items-start justify-between">
+								<h2 class="text-lg font-medium text-white">{room.name}</h2>
+								{#if room.is_pinned}
+									<span class="text-base" title="Pinned">📌</span>
+								{/if}
+							</div>
+							{#if room.topic_description}
+								<p class="mb-4 line-clamp-2 text-sm text-neutral-400">{room.topic_description}</p>
+							{/if}
+							<div class="mb-4 space-y-1.5 text-xs text-neutral-500">
+								{#if room.creator_username}
+									<p>
+										by <span class="text-neutral-400">{room.creator_username}</span>
+									</p>
+								{:else}
+									<p>{new Date(room.created_at).toLocaleDateString()}</p>
+								{/if}
+								<p>
+									<span class="text-neutral-400">{room.participants}</span>
+									{room.participants === 1 ? 'participant' : 'participants'}
+								</p>
+								<p>Expires {new Date(room.expires_at).toLocaleDateString()}</p>
+							</div>
+							<button
+								type="button"
+								on:click={() => handleJoinRoom(room.id)}
+								class="w-full rounded-lg bg-white px-4 py-2 text-sm font-medium text-neutral-950 transition hover:bg-neutral-100"
+							>
+								Join Room
+							</button>
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
+	</main>
+</div>

@@ -26,62 +26,72 @@
 	}
 </script>
 
-<div
-	class="flex min-h-screen items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 px-4 py-12 sm:px-6 lg:px-8"
->
-	<div class="w-full max-w-md rounded-lg bg-white p-8 shadow-xl">
-		<div class="mb-8 text-center">
-			<MessageCircle class="mx-auto h-12 w-12 text-green-600" />
-			<h2 class="mt-4 text-3xl font-bold text-gray-900">Join Yappin</h2>
-			<p class="mt-2 text-sm text-gray-600">Create your account to start chatting</p>
-		</div>
+<div class="relative min-h-screen overflow-hidden bg-neutral-950">
+	<div class="absolute inset-0 bg-gradient-to-br from-neutral-900 via-neutral-950 to-black"></div>
+	<div
+		class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-40"
+	></div>
 
-		<form class="space-y-6" on:submit|preventDefault={handleSubmit}>
-			{#if error}
-				<div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-					<p class="text-sm">{error}</p>
+	<div class="relative z-10 flex min-h-screen items-center justify-center px-4 py-12">
+		<div class="w-full max-w-md">
+			<!-- Logo -->
+			<a href="/" class="mb-12 flex items-center justify-center gap-2">
+				<MessageCircle class="h-8 w-8 text-white" strokeWidth={1.5} />
+				<span class="text-xl font-light text-white">Yappin</span>
+			</a>
+
+			<!-- Form Card -->
+			<div class="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl">
+				<div class="mb-8">
+					<h2 class="text-2xl font-light text-white">Create account</h2>
+					<p class="mt-1 text-sm text-neutral-400">Join the conversation</p>
 				</div>
-			{/if}
 
-			<Input
-				type="text"
-				bind:value={username}
-				label="Username"
-				placeholder="Choose a username"
-				required
-			/>
+				<form class="space-y-5" on:submit|preventDefault={handleSubmit}>
+					{#if error}
+						<div class="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3">
+							<p class="text-sm text-red-200">{error}</p>
+						</div>
+					{/if}
 
-			<Input
-				type="email"
-				bind:value={email}
-				label="Email Address"
-				placeholder="Enter your email"
-				required
-			/>
+					<Input
+						type="text"
+						bind:value={username}
+						label="Username"
+						placeholder="Choose a username"
+						required
+					/>
 
-			<Input
-				type="password"
-				bind:value={password}
-				label="Password"
-				placeholder="Min 8 chars (uppercase, number, special char)"
-				required
-			/>
+					<Input
+						type="email"
+						bind:value={email}
+						label="Email"
+						placeholder="you@example.com"
+						required
+					/>
 
-			<Button type="submit" variant="primary" disabled={loading}>
-				{loading ? 'Creating account...' : 'Create Account'}
-			</Button>
-		</form>
+					<Input
+						type="password"
+						bind:value={password}
+						label="Password"
+						placeholder="Min 8 characters"
+						required
+					/>
 
-		<div class="mt-6 text-center">
-			<p class="text-sm text-gray-600">
-				Already have an account?
-				<a
-					href="/login"
-					class="font-medium text-green-600 transition duration-200 hover:text-green-500"
-				>
-					Sign in
-				</a>
-			</p>
+					<Button type="submit" variant="primary" disabled={loading}>
+						{loading ? 'Creating account...' : 'Create Account'}
+					</Button>
+				</form>
+
+				<div class="mt-6 text-center">
+					<p class="text-sm text-neutral-400">
+						Already have an account?
+						<a href="/login" class="font-medium text-white transition hover:text-neutral-300">
+							Sign in
+						</a>
+					</p>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>

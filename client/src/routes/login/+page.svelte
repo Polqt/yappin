@@ -30,54 +30,64 @@
 	}
 </script>
 
-<div
-	class="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-12 sm:px-6 lg:px-8"
->
-	<div class="w-full max-w-md rounded-lg bg-white p-8 shadow-xl">
-		<div class="mb-8 text-center">
-			<MessageCircle class="mx-auto h-12 w-12 text-blue-600" />
-			<h2 class="mt-4 text-3xl font-bold text-gray-900">Welcome Back</h2>
-			<p class="mt-2 text-sm text-gray-600">Sign in to your Yappin account</p>
-		</div>
+<div class="relative min-h-screen overflow-hidden bg-neutral-950">
+	<div class="absolute inset-0 bg-gradient-to-br from-neutral-900 via-neutral-950 to-black"></div>
+	<div
+		class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-40"
+	></div>
 
-		<form class="space-y-6" on:submit|preventDefault={handleSubmit}>
-			{#if error}
-				<div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-					<p class="text-sm">{error}</p>
+	<div class="relative z-10 flex min-h-screen items-center justify-center px-4 py-12">
+		<div class="w-full max-w-md">
+			<!-- Logo -->
+			<a href="/" class="mb-12 flex items-center justify-center gap-2">
+				<MessageCircle class="h-8 w-8 text-white" strokeWidth={1.5} />
+				<span class="text-xl font-light text-white">Yappin</span>
+			</a>
+
+			<!-- Form Card -->
+			<div class="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl">
+				<div class="mb-8">
+					<h2 class="text-2xl font-light text-white">Welcome back</h2>
+					<p class="mt-1 text-sm text-neutral-400">Sign in to continue</p>
 				</div>
-			{/if}
 
-			<Input
-				type="email"
-				bind:value={email}
-				label="Email Address"
-				placeholder="Enter your email"
-				required
-			/>
+				<form class="space-y-5" on:submit|preventDefault={handleSubmit}>
+					{#if error}
+						<div class="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3">
+							<p class="text-sm text-red-200">{error}</p>
+						</div>
+					{/if}
 
-			<Input
-				type="password"
-				bind:value={password}
-				label="Password"
-				placeholder="Enter your password"
-				required
-			/>
+					<Input
+						type="email"
+						bind:value={email}
+						label="Email"
+						placeholder="you@example.com"
+						required
+					/>
 
-			<Button type="submit" variant="primary" disabled={loading}>
-				{loading ? 'Signing in...' : 'Sign In'}
-			</Button>
-		</form>
+					<Input
+						type="password"
+						bind:value={password}
+						label="Password"
+						placeholder="Enter your password"
+						required
+					/>
 
-		<div class="mt-6 text-center">
-			<p class="text-sm text-gray-600">
-				Don't have an account?
-				<a
-					href="/signup"
-					class="font-medium text-blue-600 transition duration-200 hover:text-blue-500"
-				>
-					Sign up
-				</a>
-			</p>
+					<Button type="submit" variant="primary" disabled={loading}>
+						{loading ? 'Signing in...' : 'Sign In'}
+					</Button>
+				</form>
+
+				<div class="mt-6 text-center">
+					<p class="text-sm text-neutral-400">
+						New to Yappin?
+						<a href="/signup" class="font-medium text-white transition hover:text-neutral-300">
+							Create account
+						</a>
+					</p>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>
