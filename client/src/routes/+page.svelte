@@ -61,26 +61,5 @@
 				</a>
 			{/if}
 		</div>
-
-		<!-- Features -->
-		<div class="mt-24 grid max-w-4xl grid-cols-1 gap-6 sm:grid-cols-3">
-			<div class="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-				<div class="mb-3 text-3xl">⚡</div>
-				<h3 class="mb-2 text-sm font-medium text-white">Real-time</h3>
-				<p class="text-xs font-light text-neutral-400">
-					Instant messaging with WebSocket technology
-				</p>
-			</div>
-			<div class="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-				<div class="mb-3 text-3xl">🔒</div>
-				<h3 class="mb-2 text-sm font-medium text-white">Secure</h3>
-				<p class="text-xs font-light text-neutral-400">End-to-end encrypted conversations</p>
-			</div>
-			<div class="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-				<div class="mb-3 text-3xl">🎯</div>
-				<h3 class="mb-2 text-sm font-medium text-white">Simple</h3>
-				<p class="text-xs font-light text-neutral-400">Clean interface, zero distractions</p>
-			</div>
-		</div>
 	</div>
 </div>
