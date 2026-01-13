@@ -7,7 +7,7 @@
 </script>
 
 <div class="mx-auto max-w-4xl space-y-3">
-	{#each messages as message}
+	{#each messages as message, index (`${message.user_id || 'anon'}-${message.created_at || index}`)}
 		<div
 			class="flex gap-3 rounded-xl border border-white/10 p-4 backdrop-blur-sm transition hover:border-white/20 {message.user_id ===
 			$auth.user?.id
