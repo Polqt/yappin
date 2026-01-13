@@ -13,12 +13,12 @@ func ValidateEmail(email string) error {
 	if email == "" {
 		return fmt.Errorf("email is required")
 	}
-	
+
 	_, err := mail.ParseAddress(email)
 	if err != nil {
 		return fmt.Errorf("invalid email format")
 	}
-	
+
 	return nil
 }
 
@@ -27,17 +27,17 @@ func ValidateUsername(username string) error {
 	if username == "" {
 		return fmt.Errorf("username is required")
 	}
-	
+
 	if len(username) < 3 || len(username) > 20 {
 		return fmt.Errorf("username must be between 3 and 20 characters")
 	}
-	
+
 	// Allow alphanumeric characters and underscores
 	matched, _ := regexp.MatchString("^[a-zA-Z0-9_]+$", username)
 	if !matched {
 		return fmt.Errorf("username can only contain letters, numbers, and underscores")
 	}
-	
+
 	return nil
 }
 
@@ -46,22 +46,22 @@ func ValidatePassword(password string) error {
 	if password == "" {
 		return fmt.Errorf("password is required")
 	}
-	
+
 	if len(password) < 8 {
 		return fmt.Errorf("password must be at least 8 characters long")
 	}
-	
+
 	if len(password) > 128 {
 		return fmt.Errorf("password must be less than 128 characters long")
 	}
-	
+
 	var (
 		hasUpper   = false
 		hasLower   = false
 		hasNumber  = false
 		hasSpecial = false
 	)
-	
+
 	for _, char := range password {
 		switch {
 		case unicode.IsUpper(char):
@@ -74,23 +74,23 @@ func ValidatePassword(password string) error {
 			hasSpecial = true
 		}
 	}
-	
+
 	if !hasUpper {
 		return fmt.Errorf("password must contain at least one uppercase letter")
 	}
-	
+
 	if !hasLower {
 		return fmt.Errorf("password must contain at least one lowercase letter")
 	}
-	
+
 	if !hasNumber {
 		return fmt.Errorf("password must contain at least one number")
 	}
-	
+
 	if !hasSpecial {
 		return fmt.Errorf("password must contain at least one special character")
 	}
-	
+
 	return nil
 }
 
@@ -103,7 +103,7 @@ func SanitizeString(input string) string {
 		}
 		return -1
 	}, input)
-	
+
 	return strings.TrimSpace(cleaned)
 }
 

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"chat-application/internal/api/model"
+	"chat-application/internal/constants"
 	repository "chat-application/internal/repo/user"
 	"chat-application/util"
 
@@ -15,22 +16,44 @@ import (
 	"github.com/google/uuid"
 )
 
+// JWTClaims represents the custom claims stored in JWT tokens.
 type JWTClaims struct {
-	ID string `json:"id"`
+	ID       string `json:"id"`
 	Username string `json:"username"`
 	jwt.RegisteredClaims
 }
 
+// UserService handles user-related business logic.
 type UserService struct {
 	userRepo *repository.UserRepository
-	timeout time.Duration
+	timeout  time.Duration
 }
 
+// NewUserService creates a new UserService instance.
 func NewUserService(userRepo *repository.UserRepository) *UserService {
 	return &UserService{
 		userRepo: userRepo,
-		timeout: time.Duration(2) * time.Second,
+		timeout:  constants.DefaultServiceTimeout,
 	}
+}
+
+// generateJWTToken creates a signed JWT token for the given user.
+func (s *UserService) generateJWTToken(userID, username string) (string, error) {
+	secretKey := util.GetEnv("JWT_SECRET_KEY", "")
+	if secretKey == "" {
+		return "", fmt.Errorf("server configuration error")
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, JWTClaims{
+		ID:       userID,
+		Username: username,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    userID,
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(constants.JWTTokenExpiry)),
+		},
+	})
+
+	return token.SignedString([]byte(secretKey))
 }
 
 func (s *UserService) CreateUser(ctx context.Context, req model.RequestCreateUser) (*model.ResponseLoginUser, error) {
@@ -43,17 +66,17 @@ func (s *UserService) CreateUser(ctx context.Context, req model.RequestCreateUse
 	req.Username = util.SanitizeString(req.Username)
 	req.Email = util.SanitizeString(req.Email)
 	req.Password = util.SanitizeString(req.Password)
-	
+
 	if err := util.ValidateUsername(req.Username); err != nil {
 		log.Printf("UserService.CreateUser - Username validation failed: %v", err)
 		return nil, err
 	}
-	
+
 	if err := util.ValidateEmail(req.Email); err != nil {
 		log.Printf("UserService.CreateUser - Email validation failed: %v", err)
 		return nil, err
 	}
-	
+
 	if err := util.ValidatePassword(req.Password); err != nil {
 		log.Printf("UserService.CreateUser - Password validation failed: %v", err)
 		return nil, err
@@ -65,7 +88,7 @@ func (s *UserService) CreateUser(ctx context.Context, req model.RequestCreateUse
 		return nil, fmt.Errorf("failed to process password")
 	}
 
-	u := &repository.User {
+	u := &repository.User{
 		Username:     req.Username,
 		Email:        req.Email,
 		PasswordHash: &hashedPassword,
@@ -77,34 +100,21 @@ func (s *UserService) CreateUser(ctx context.Context, req model.RequestCreateUse
 		if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique") {
 			return nil, fmt.Errorf("username or email already exists")
 		}
-		return nil, fmt.Errorf("failed to create user: %v", err)
+		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
 	log.Printf("UserService.CreateUser - User created successfully in database: %s", user.ID.String())
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, JWTClaims{
-		ID: user.ID.String(),
-		Username: user.Username,
-		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer: user.ID.String(),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-		},
-	})
-
-	secretKey := util.GetEnv("JWT_SECRET_KEY", "")
-	if secretKey == "" {
-		log.Printf("UserService.CreateUser - JWT_SECRET_KEY not set")
-		return nil, fmt.Errorf("server configuration error")
-	}
-	ss, err := token.SignedString([]byte(secretKey))
+	ss, err := s.generateJWTToken(user.ID.String(), user.Username)
 	if err != nil {
+		log.Printf("UserService.CreateUser - JWT generation failed: %v", err)
 		return nil, err
 	}
 
 	return &model.ResponseLoginUser{
 		AccessToken: ss,
-		Username: user.Username,
-		ID: user.ID.String(),
+		Username:    user.Username,
+		ID:          user.ID.String(),
 	}, nil
 }
 
@@ -116,7 +126,7 @@ func (s *UserService) Login(ctx context.Context, req model.RequestLoginUser) (*m
 
 	req.Email = util.SanitizeString(req.Email)
 	req.Password = util.SanitizeString(req.Password)
-	
+
 	if err := util.ValidateEmail(req.Email); err != nil {
 		log.Printf("UserService.Login - Email validation failed: %v", err)
 		return nil, fmt.Errorf("invalid email or password")
@@ -151,31 +161,15 @@ func (s *UserService) Login(ctx context.Context, req model.RequestLoginUser) (*m
 
 	log.Printf("UserService.Login - Password verified successfully for user: %s", user.ID.String())
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, JWTClaims{
-		ID: user.ID.String(),
-		Username: user.Username,
-		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer: user.ID.String(),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-		},
-	})
-
-	secretKey := util.GetEnv("JWT_SECRET_KEY", "")
-	if secretKey == "" {
-		log.Printf("UserService.Login - JWT_SECRET_KEY not set")
-		return nil, fmt.Errorf("server configuration error")
-	}
-
-	ss, err := token.SignedString([]byte(secretKey))
+	ss, err := s.generateJWTToken(user.ID.String(), user.Username)
 	if err != nil {
-		log.Printf("UserService.Login - JWT signing failed for user: %s, error: %v", user.ID.String(), err)
+		log.Printf("UserService.Login - JWT generation failed for user: %s, error: %v", user.ID.String(), err)
 		return nil, fmt.Errorf("failed to generate authentication token")
 	}
 
 	log.Printf("UserService.Login - Login successful for user: %s (%s)", user.ID.String(), user.Username)
 	return &model.ResponseLoginUser{AccessToken: ss, Username: user.Username, ID: user.ID.String()}, nil
 }
-
 
 func (s *UserService) GetUserByID(ctx context.Context, id uuid.UUID) (*repository.User, error) {
 	return s.userRepo.GetUserByID(ctx, id)
@@ -200,7 +194,7 @@ func (s *UserService) UpdateUsername(ctx context.Context, userID string, newUser
 	}
 
 	return &model.ResponseLoginUser{
-		ID: user.ID.String(),
+		ID:       user.ID.String(),
 		Username: user.Username,
 	}, nil
 }

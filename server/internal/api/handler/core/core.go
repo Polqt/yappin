@@ -1,3 +1,4 @@
+// Package handler provides HTTP handlers for core chat functionality.
 package handler
 
 import (
@@ -11,6 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"chat-application/internal/api/model"
+	"chat-application/internal/constants"
 	"chat-application/internal/middleware"
 	roomRepository "chat-application/internal/repo/room"
 	websoc "chat-application/internal/websocket"
@@ -19,16 +21,41 @@ import (
 	"github.com/google/uuid"
 )
 
+// allowedWebSocketOrigins defines the valid origins for WebSocket connections.
+var allowedWebSocketOrigins = []string{
+	"http://localhost:3000",
+	"http://localhost:5173",
+	"http://localhost:5174",
+	"https://yappin.chat",
+}
+
+// checkWebSocketOrigin validates the origin header against allowed origins.
+func checkWebSocketOrigin(r *http.Request) bool {
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		return true
+	}
+	for _, allowed := range allowedWebSocketOrigins {
+		if origin == allowed {
+			return true
+		}
+	}
+	log.Printf("WebSocket connection rejected: invalid origin %s", origin)
+	return false
+}
+
+// CoreHandler handles HTTP requests for core chat functionality.
 type CoreHandler struct {
 	core           *websoc.Core
 	roomRepository *roomRepository.RoomRepository
 	roomLimit      int
 }
 
+// NewCoreHandler creates a new CoreHandler instance.
 func NewCoreHandler(c *websoc.Core) *CoreHandler {
-	roomLimit := 50
-	if maxRooomStr := util.GetEnv("MAX_ROOMS", ""); maxRooomStr != "" {
-		if limit, err := strconv.Atoi(maxRooomStr); err == nil {
+	roomLimit := constants.DefaultRoomLimit
+	if maxRoomsStr := util.GetEnv("MAX_ROOMS", ""); maxRoomsStr != "" {
+		if limit, err := strconv.Atoi(maxRoomsStr); err == nil {
 			roomLimit = limit
 		}
 	}
@@ -95,7 +122,7 @@ func (h *CoreHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.core.Rooms[room.ID.String()] = &websoc.Room{
+	h.core.AddRoom(&websoc.Room{
 		ID:               room.ID.String(),
 		Name:             room.Name,
 		Clients:          make(map[string]*websoc.Client),
@@ -104,7 +131,7 @@ func (h *CoreHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 		TopicDescription: room.TopicDescription,
 		TopicURL:         room.TopicURL,
 		TopicSource:      room.TopicSource,
-	}
+	})
 
 	response := model.CreateRoomReq{
 		ID:   room.ID.String(),
@@ -146,8 +173,8 @@ func (h *CoreHandler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, exists := h.core.Rooms[dbRoom.ID.String()]; !exists {
-		h.core.Rooms[roomID] = &websoc.Room{
+	if _, exists := h.core.GetRoom(dbRoom.ID.String()); !exists {
+		h.core.AddRoom(&websoc.Room{
 			ID:               roomID,
 			Name:             dbRoom.Name,
 			Clients:          make(map[string]*websoc.Client),
@@ -156,15 +183,13 @@ func (h *CoreHandler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 			TopicDescription: dbRoom.TopicDescription,
 			TopicURL:         dbRoom.TopicURL,
 			TopicSource:      dbRoom.TopicSource,
-		}
+		})
 	}
 
 	var upgrader = websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
+		ReadBufferSize:  constants.WebSocketReadBufferSize,
+		WriteBufferSize: constants.WebSocketWriteBufferSize,
+		CheckOrigin:     checkWebSocketOrigin,
 
 		EnableCompression: true,
 	}
@@ -226,7 +251,7 @@ func (h *CoreHandler) GetRooms(w http.ResponseWriter, r *http.Request) {
 		}
 
 		participantCount := 0
-		if wsRoom, exists := h.core.Rooms[room.ID.String()]; exists {
+		if wsRoom, exists := h.core.GetRoom(room.ID.String()); exists {
 			participantCount = len(wsRoom.Clients)
 		}
 
@@ -244,8 +269,8 @@ func (h *CoreHandler) GetRooms(w http.ResponseWriter, r *http.Request) {
 			Participants:     participantCount,
 		})
 
-		if _, exists := h.core.Rooms[room.ID.String()]; !exists {
-			h.core.Rooms[room.ID.String()] = &websoc.Room{
+		if _, exists := h.core.GetRoom(room.ID.String()); !exists {
+			h.core.AddRoom(&websoc.Room{
 				ID:               room.ID.String(),
 				Name:             room.Name,
 				Clients:          make(map[string]*websoc.Client),
@@ -254,7 +279,7 @@ func (h *CoreHandler) GetRooms(w http.ResponseWriter, r *http.Request) {
 				TopicDescription: room.TopicDescription,
 				TopicURL:         room.TopicURL,
 				TopicSource:      room.TopicSource,
-			}
+			})
 		}
 	}
 
@@ -265,12 +290,13 @@ func (h *CoreHandler) GetClients(w http.ResponseWriter, r *http.Request) {
 	var clients []model.ClientRes
 	roomID := chi.URLParam(r, "room_id")
 
-	if _, ok := h.core.Rooms[roomID]; !ok {
+	room, ok := h.core.GetRoom(roomID)
+	if !ok {
 		util.WriteErrorResponse(w, http.StatusNotFound, "Room not found")
 		return
 	}
 
-	for _, c := range h.core.Rooms[roomID].Clients {
+	for _, c := range room.Clients {
 		clients = append(clients, model.ClientRes{
 			ID:       c.ID,
 			Username: c.Username,
@@ -293,17 +319,8 @@ func (h *CoreHandler) AddReaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	allowedEmojis := []string{"👍", "❤️", "😂", "😮", "😢", "👏", "🎉"}
-	isValid := false
-	for _, emoji := range allowedEmojis {
-		if req.Emoji == emoji {
-			isValid = true
-			break
-		}
-	}
-
-	if !isValid {
-		util.WriteErrorResponse(w, http.StatusBadRequest, "Invalid JSON")
+	if !constants.IsValidReactionEmoji(req.Emoji) {
+		util.WriteErrorResponse(w, http.StatusBadRequest, "Invalid emoji")
 		return
 	}
 

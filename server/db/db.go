@@ -1,6 +1,7 @@
 package db
 
 import (
+	"chat-application/internal/constants"
 	"chat-application/util"
 	"database/sql"
 	"fmt"
@@ -30,8 +31,6 @@ func NewDatabase() (*sql.DB, error) {
 		log.Println("Connecting to local database...")
 		log.Printf("Environment: %s", env)
 		log.Printf("Connecting to: %s:%s/%s", dbHost, dbPort, dbName)
-		log.Printf("User: %s", dbUser)
-		log.Printf("Full DSN: %s", localDSN)
 
 		db, err = sql.Open("pgx", localDSN)
 		if err != nil {
@@ -43,13 +42,19 @@ func NewDatabase() (*sql.DB, error) {
 			log.Fatal("DATABASE_URL is not set for production environment")
 		}
 
-		log.Printf("Database connection string: %s", connStr)
 		log.Printf("Environment: %s", env)
+		log.Println("Connecting to production database...")
 
 		db, err = sql.Open("pgx", connStr)
 		if err != nil {
 			log.Fatalf("Failed to connect to production database: %v", err)
 		}
 	}
+
+	// Configure connection pool
+	db.SetMaxOpenConns(constants.DBMaxOpenConns)
+	db.SetMaxIdleConns(constants.DBMaxIdleConns)
+	db.SetConnMaxLifetime(constants.DBConnMaxLifetime)
+
 	return db, nil
 }
