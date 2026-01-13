@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { auth } from '$stores/auth';
 	import { goto } from '$app/navigation';
+	import { ROUTES } from '$lib/constants/api';
 	import { MessageCircle, User, Trophy, LogOut } from 'lucide-svelte';
 
 	async function handleLogout() {
 		await auth.logout();
-		goto('/');
+		goto(ROUTES.home);
 	}
 </script>
 
@@ -14,7 +15,7 @@
 		<div class="flex h-16 items-center justify-between">
 			<!-- Logo -->
 			<div class="flex items-center">
-				<a href="/" class="flex items-center gap-2">
+				<a href={ROUTES.home} class="flex items-center gap-2">
 					<MessageCircle class="h-6 w-6 text-white" strokeWidth={1.5} />
 					<span class="text-lg font-light text-white">Yappin</span>
 				</a>
@@ -24,21 +25,21 @@
 			{#if $auth.user}
 				<nav class="flex items-center gap-1">
 					<a
-						href="/dashboard"
+						href={ROUTES.dashboard}
 						class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-400 transition hover:bg-white/5 hover:text-white"
 					>
 						<MessageCircle class="h-4 w-4" strokeWidth={1.5} />
 						<span class="hidden sm:inline">Rooms</span>
 					</a>
 					<a
-						href="/dashboard/leaderboard"
+						href={ROUTES.leaderboard}
 						class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-400 transition hover:bg-white/5 hover:text-white"
 					>
 						<Trophy class="h-4 w-4" strokeWidth={1.5} />
 						<span class="hidden sm:inline">Leaderboard</span>
 					</a>
 					<a
-						href="/profile"
+						href={ROUTES.profile}
 						class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-neutral-400 transition hover:bg-white/5 hover:text-white"
 					>
 						<User class="h-4 w-4" strokeWidth={1.5} />

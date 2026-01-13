@@ -12,5 +12,22 @@ export const API_ENDPOINTS = {
 		list: '/api/websoc/get-rooms',
 		create: '/api/websoc/create-room',
 		join: (roomId: string) => `/api/websoc/join-room/${roomId}`
+	},
+	stats: {
+		profile: '/api/users/profile',
+		leaderboard: '/api/stats/leaderboard',
+		checkin: '/api/stats/checkin',
+		userStats: (userId: string) => `/api/stats/user/${userId}`
 	}
+} as const;
+
+export const ROUTES = {
+	home: '/',
+	login: '/login',
+	signup: '/signup',
+	dashboard: '/dashboard',
+	createRoom: '/dashboard/create-room',
+	leaderboard: '/dashboard/leaderboard',
+	profile: '/profile',
+	room: (roomId: string) => `/room/${roomId}`
 } as const;
