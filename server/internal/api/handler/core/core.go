@@ -1,4 +1,3 @@
-// Package handler provides HTTP handlers for core chat functionality.
 package handler
 
 import (

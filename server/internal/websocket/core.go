@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"sync"
 
+	"chat-application/internal/constants"
 	roomRepository "chat-application/internal/repo/room"
 	statsRepository "chat-application/internal/repo/stats"
 
@@ -12,51 +14,109 @@ import (
 )
 
 type Room struct {
-	ID string `json:"id"`
-	Name string `json:"name"`
-	Clients map[string]*Client `json:"clients"`
-	History []*Message 
-	IsPinned bool `json:"is_pinned"`
-	TopicTitle *string `json:"topic_title,omitempty"`
+	ID               string             `json:"id"`
+	Name             string             `json:"name"`
+	Clients          map[string]*Client `json:"clients"`
+	History          []*Message
+	IsPinned         bool    `json:"is_pinned"`
+	TopicTitle       *string `json:"topic_title,omitempty"`
 	TopicDescription *string `json:"topic_description,omitempty"`
-	TopicURL *string `json:"topic_url,omitempty"`
-	TopicSource *string `json:"topic_source,omitempty"`
+	TopicURL         *string `json:"topic_url,omitempty"`
+	TopicSource      *string `json:"topic_source,omitempty"`
+	mu               sync.RWMutex
+}
+
+// AddMessage adds a message to the room history with a size limit
+func (r *Room) AddMessage(msg *Message) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if len(r.History) >= constants.MaxRoomHistory {
+		r.History = r.History[1:]
+	}
+	r.History = append(r.History, msg)
+}
+
+// GetHistory returns a copy of the room history
+func (r *Room) GetHistory() []*Message {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	history := make([]*Message, len(r.History))
+	copy(history, r.History)
+	return history
 }
 
 type Core struct {
-	Rooms map[string]*Room
-	Register chan *Client
-	Unregister chan *Client
-	Broadcast chan *Message
-	RoomRepository *roomRepository.RoomRepository
+	Rooms           map[string]*Room
+	roomsMu         sync.RWMutex
+	Register        chan *Client
+	Unregister      chan *Client
+	Broadcast       chan *Message
+	RoomRepository  *roomRepository.RoomRepository
 	StatsRepository *statsRepository.StatsRepository
-	db *sql.DB
+	db              *sql.DB
 }
 
 func NewCore(db *sql.DB) *Core {
 	return &Core{
-		Rooms: make(map[string]*Room),
-		Register: make(chan *Client),
-		Unregister: make(chan *Client),
-		Broadcast: make(chan *Message, 5),
-		RoomRepository: roomRepository.NewRoomRepository(db),
+		Rooms:           make(map[string]*Room),
+		Register:        make(chan *Client),
+		Unregister:      make(chan *Client),
+		Broadcast:       make(chan *Message, 5),
+		RoomRepository:  roomRepository.NewRoomRepository(db),
 		StatsRepository: statsRepository.NewStatsRepository(db),
-		db: db,
+		db:              db,
 	}
 }
 
-func (c *Core) GetDB() *sql.DB  {
+func (c *Core) GetDB() *sql.DB {
 	return c.db
+}
+
+// GetRoom safely retrieves a room by ID
+func (c *Core) GetRoom(roomID string) (*Room, bool) {
+	c.roomsMu.RLock()
+	defer c.roomsMu.RUnlock()
+	room, ok := c.Rooms[roomID]
+	return room, ok
+}
+
+// AddRoom safely adds a room
+func (c *Core) AddRoom(room *Room) {
+	c.roomsMu.Lock()
+	defer c.roomsMu.Unlock()
+	c.Rooms[room.ID] = room
+}
+
+// DeleteRoom safely removes a room
+func (c *Core) DeleteRoom(roomID string) {
+	c.roomsMu.Lock()
+	defer c.roomsMu.Unlock()
+	delete(c.Rooms, roomID)
+}
+
+// GetAllRooms returns a snapshot of all rooms
+func (c *Core) GetAllRooms() map[string]*Room {
+	c.roomsMu.RLock()
+	defer c.roomsMu.RUnlock()
+	rooms := make(map[string]*Room, len(c.Rooms))
+	for k, v := range c.Rooms {
+		rooms[k] = v
+	}
+	return rooms
 }
 
 func (c *Core) Start() {
 	for {
 		select {
 		case client := <-c.Register:
-			if room, ok := c.Rooms[client.RoomID]; ok {
-				if _, ok := room.Clients[client.ID]; !ok {
+			room, ok := c.GetRoom(client.RoomID)
+			if ok {
+				room.mu.Lock()
+				if _, exists := room.Clients[client.ID]; !exists {
 					room.Clients[client.ID] = client
 				}
+				room.mu.Unlock()
+
 				go func() {
 					roomUUID, err := uuid.Parse(client.RoomID)
 					if err != nil {
@@ -77,28 +137,32 @@ func (c *Core) Start() {
 						}
 
 						websocketMsg := &Message{
-							Content: msg.Content,
-							RoomID: client.RoomID,
+							Content:  msg.Content,
+							RoomID:   client.RoomID,
 							Username: msg.Username,
-							UserID: userID,
-							System: msg.IsSystem,
+							UserID:   userID,
+							System:   msg.IsSystem,
 						}
 						client.Message <- websocketMsg
 					}
 				}()
 			}
-		
+
 		case client := <-c.Unregister:
-			if room, ok := c.Rooms[client.RoomID]; ok {
-				if _, ok := room.Clients[client.ID]; ok {
-					delete(c.Rooms[client.RoomID].Clients, client.ID)
+			room, ok := c.GetRoom(client.RoomID)
+			if ok {
+				room.mu.Lock()
+				if _, exists := room.Clients[client.ID]; exists {
+					delete(room.Clients, client.ID)
 					close(client.Message)
 				}
+				room.mu.Unlock()
 			}
 
 		case message := <-c.Broadcast:
-			if room, ok := c.Rooms[message.RoomID]; ok {
-				room.History = append(room.History, message)
+			room, ok := c.GetRoom(message.RoomID)
+			if ok {
+				room.AddMessage(message)
 
 				go func(msg *Message) {
 					roomUUID, err := uuid.Parse(msg.RoomID)
@@ -115,10 +179,10 @@ func (c *Core) Start() {
 					}
 
 					dbMessage := &roomRepository.Message{
-						RoomID: roomUUID,
-						UserID: userID,
+						RoomID:   roomUUID,
+						UserID:   userID,
 						Username: msg.Username,
-						Content: msg.Content,
+						Content:  msg.Content,
 						IsSystem: msg.System,
 					}
 
@@ -140,12 +204,14 @@ func (c *Core) Start() {
 						}
 					}
 				}(message)
+
+				// Send to all clients in room
+				room.mu.RLock()
 				for _, client := range room.Clients {
 					client.Message <- message
 				}
+				room.mu.RUnlock()
 			}
 		}
-		
-	
 	}
 }

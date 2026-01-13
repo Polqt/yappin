@@ -5,6 +5,9 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -13,6 +16,7 @@ import (
 	"chat-application/db/migrations"
 
 	userHandler "chat-application/internal/api/handler/user"
+	"chat-application/internal/constants"
 	roomRepository "chat-application/internal/repo/room"
 	userRepo "chat-application/internal/repo/user"
 	userService "chat-application/internal/service/user"
@@ -72,19 +76,47 @@ func main() {
 
 	go startRoomCleanup(dbConn, webService)
 
-	rateLimiter := middleware.NewRateLimiter(100, time.Minute)
+	rateLimiter := middleware.NewRateLimiter(constants.DefaultRateLimit, constants.RateLimitWindow)
 	routerWithLimiter := rateLimiter.Middleware(router.SetupRoutes(userHandler, coreHandler, statsHandler))
 
-	if err := http.ListenAndServe(":8080", routerWithLimiter); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	// Create server with graceful shutdown support
+	srv := &http.Server{
+		Addr:         ":8080",
+		Handler:      routerWithLimiter,
+		ReadTimeout:  constants.HTTPServerTimeout,
+		WriteTimeout: constants.HTTPServerTimeout,
+		IdleTimeout:  constants.HTTPServerTimeout * 2,
 	}
 
+	// Start server in goroutine
+	go func() {
+		log.Println("Server starting on :8080")
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Failed to start server: %v", err)
+		}
+	}()
+
+	// Wait for interrupt signal for graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down server...")
+
+	// Give outstanding requests time to complete
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+
+	log.Println("Server exited gracefully")
 }
 
 func startRoomCleanup(db *sql.DB, websocketCore *websoc.Core) {
 	roomRepository := roomRepository.NewRoomRepository(db)
 	pinnedRoomsService := pinnedRooms.NewPinnedRoomsService(db, websocketCore)
-	ticker := time.NewTicker(5 * time.Minute)
+	ticker := time.NewTicker(constants.RoomCleanupInterval)
 	defer ticker.Stop()
 
 	cleanupRooms(roomRepository, pinnedRoomsService)
