@@ -3,6 +3,7 @@ package stats
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"log"
 	"time"
 
@@ -81,7 +82,7 @@ func (r *StatsRepository) GetOrCreateUserStats(ctx context.Context, userID uuid.
 		&stats.TotalMessages, &stats.TotalUpvotes, &stats.LastCheckinDate,
 		&stats.LastUpvoteGivenDate, &stats.CreatedAt, &stats.UpdatedAt,
 	)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		insertQuery := `
 			INSERT INTO user_stats (user_id)
 			VALUES ($1)
@@ -346,7 +347,7 @@ func (r *StatsRepository) CanUserUpvote(ctx context.Context, fromUserID, toUserI
 
 	var lastUpvoteDate *time.Time
 	err = r.db.QueryRowContext(ctx, todayQuery, fromUserID).Scan(&lastUpvoteDate)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Printf("CanUserUpvote - Error checking last upvote date: %v", err)
 		return false, err
 	}

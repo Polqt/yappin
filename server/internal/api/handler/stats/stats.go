@@ -13,16 +13,19 @@ import (
 	"github.com/google/uuid"
 )
 
+// StatsHandler handles HTTP requests for user statistics operations.
 type StatsHandler struct {
 	statsService *statsService.StatsService
 }
 
+// NewStatsHandler creates a new StatsHandler instance.
 func NewStatsHandler(statsService *statsService.StatsService) *StatsHandler {
 	return &StatsHandler{
 		statsService: statsService,
 	}
 }
 
+// CheckIn handles daily check-in requests for users.
 func (h *StatsHandler) CheckIn(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -71,6 +74,7 @@ func (h *StatsHandler) GetUserProfile(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error retrieving user profile for user %s: %v", targetUserID, err)
 		util.WriteErrorResponse(w, http.StatusInternalServerError, "failed to retrieve user profile")
+		return
 	}
 
 	util.WriteJSONResponse(w, http.StatusOK, profile)

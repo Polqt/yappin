@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"chat-application/internal/api/model"
+	"chat-application/internal/constants"
 	"chat-application/internal/middleware"
 	service "chat-application/internal/service/user"
 	"chat-application/util"
@@ -13,16 +14,19 @@ import (
 	"github.com/google/uuid"
 )
 
+// UserHandler handles HTTP requests for user operations.
 type UserHandler struct {
 	userService *service.UserService
 }
 
+// NewUserHandler creates a new UserHandler instance.
 func NewUserHandler(userService *service.UserService) *UserHandler {
 	return &UserHandler{
 		userService: userService,
 	}
 }
 
+// CreateUser handles user registration requests.
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var req model.RequestCreateUser
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -42,7 +46,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("CreateUser - Success: user created with ID=%s, username=%s", user.ID, user.Username)
 
-	util.SetCookie(w, "jwt", user.AccessToken, 60*60*24) // 24 hours
+	util.SetCookie(w, constants.JWTCookieName, user.AccessToken, int(constants.JWTCookieDuration.Seconds()))
 
 	util.WriteJSONResponse(w, http.StatusCreated, user)
 }
@@ -60,13 +64,14 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	util.SetCookie(w, "jwt", user.AccessToken, 60*60*24) // 24 hours
+	util.SetCookie(w, constants.JWTCookieName, user.AccessToken, int(constants.JWTCookieDuration.Seconds()))
 
 	util.WriteJSONResponse(w, http.StatusOK, user)
 }
 
+// Logout handles user logout requests.
 func (h *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	util.ClearSecureCookie(w, "jwt")
+	util.ClearSecureCookie(w, constants.JWTCookieName)
 	util.WriteJSONResponse(w, http.StatusOK, map[string]string{"message": "logout successful"})
 }
 

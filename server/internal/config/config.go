@@ -1,5 +1,3 @@
-// Package config provides centralized configuration management for the application.
-// It loads and validates all configuration from environment variables.
 package config
 
 import (

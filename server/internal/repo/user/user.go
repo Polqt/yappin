@@ -12,12 +12,12 @@ import (
 )
 
 type User struct {
-	ID uuid.UUID `json:"id"`
-	Username string `json:"username"`
-	Email string `json:"email"`
-	PasswordHash *string `json:"-"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID           uuid.UUID `json:"id"`
+	Username     string    `json:"username"`
+	Email        string    `json:"email"`
+	PasswordHash *string   `json:"-"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type UserRepository struct {
@@ -93,7 +93,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, user *User) (*User, err
 		ctx, query,
 		user.Username, user.Email, user.PasswordHash,
 	).Scan(
-		&user.ID, 
+		&user.ID,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -105,15 +105,15 @@ func (r *UserRepository) CreateUser(ctx context.Context, user *User) (*User, err
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	return user,  nil
+	return user, nil
 }
 
-func (r *UserRepository) UpdateUsername (ctx context.Context, id uuid.UUID, username string) (*User, error) {
+func (r *UserRepository) UpdateUsername(ctx context.Context, id uuid.UUID, username string) (*User, error) {
 	query := `
 		UPDATE users
 		SET username = $1, updated_at = NOW()
 		WHERE id = $2
-		RETURN id, username, email, password_hash, created_at, updated_at
+		RETURNING id, username, email, password_hash, created_at, updated_at
 	`
 
 	var user User
