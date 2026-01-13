@@ -3,6 +3,8 @@
 	import { rooms } from '$stores/room';
 	import { roomService } from '$services/room';
 	import { goto } from '$app/navigation';
+	import { ROUTES } from '$lib/constants/api';
+	import { roomLogger } from '$lib/utils/logger';
 	import Header from '$lib/components/layout/Header.svelte';
 
 	let loading = true;
@@ -11,14 +13,14 @@
 	onMount(async () => {
 		loading = true;
 		error = '';
-		console.log('Dashboard mounted, loading rooms');
+		roomLogger.log('Dashboard mounted, loading rooms');
 		try {
 			const fetchedRooms = await roomService.getRooms();
 			rooms.set(fetchedRooms);
-			console.log('Rooms loaded:', fetchedRooms.length);
+			roomLogger.log('Rooms loaded:', fetchedRooms.length);
 		} catch (err) {
 			error = 'Failed to load rooms';
-			console.error('Failed to load rooms:', err);
+			roomLogger.error('Failed to load rooms:', err);
 		} finally {
 			loading = false;
 		}
@@ -26,9 +28,9 @@
 
 	async function handleJoinRoom(roomId: string) {
 		try {
-			await goto(`/room/${roomId}`);
+			await goto(ROUTES.room(roomId));
 		} catch (err) {
-			console.error('Failed to join room:', err);
+			roomLogger.error('Failed to join room:', err);
 		}
 	}
 </script>
@@ -41,7 +43,7 @@
 			<div class="mb-8 flex items-center justify-between">
 				<h1 class="text-2xl font-light text-white">Rooms</h1>
 				<a
-					href="/dashboard/create-room"
+					href={ROUTES.createRoom}
 					class="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/10"
 				>
 					+ New Room
@@ -66,7 +68,7 @@
 				</div>
 			{:else}
 				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-					{#each $rooms as room}
+					{#each $rooms as room (room.id)}
 						<div
 							class="group rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm transition hover:border-white/20 hover:bg-white/10"
 						>
