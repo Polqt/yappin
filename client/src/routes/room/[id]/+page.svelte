@@ -4,6 +4,8 @@
 	import { websocket } from '$stores/websocket';
 	import { auth } from '$stores/auth';
 	import { roomService } from '$services/room';
+	import { ROUTES } from '$lib/constants/api';
+	import { roomLogger } from '$lib/utils/logger';
 	import MessageList from '$lib/components/chat/MessageList.svelte';
 	import MessageInput from '$lib/components/chat/MessageInput.svelte';
 	import type { Message, Room } from '$lib/types/room';
@@ -13,6 +15,8 @@
 	let messages: Message[] = [];
 	let messagesContainer: HTMLDivElement;
 	let isConnected = false;
+	let connectionState: 'disconnected' | 'connecting' | 'connected' | 'reconnecting' =
+		'disconnected';
 	let room: Room | null = null;
 	let loadingRoom = true;
 
@@ -25,7 +29,7 @@
 
 		// Validate roomId
 		if (!roomId || roomId === 'undefined') {
-			console.error('Invalid roomId:', roomId);
+			roomLogger.error('Invalid roomId:', roomId);
 			return;
 		}
 
@@ -33,7 +37,7 @@
 		try {
 			room = await roomService.getRoomById(roomId);
 		} catch (error) {
-			console.error('Failed to load room:', error);
+			roomLogger.error('Failed to load room:', error);
 		} finally {
 			loadingRoom = false;
 		}
@@ -49,6 +53,7 @@
 		const state = $websocket;
 		messages = state.messages;
 		isConnected = state.connected;
+		connectionState = state.connectionState;
 
 		// Auto-scroll to bottom when messages change
 		if (messagesContainer && messages.length > 0) {
@@ -73,11 +78,23 @@
 
 <!-- Connection status indicator -->
 <div class="fixed right-4 top-4 z-50">
-	{#if isConnected}
+	{#if connectionState === 'connected'}
 		<div
 			class="rounded-lg border border-green-500/20 bg-green-500/10 px-4 py-2 text-green-200 backdrop-blur-sm"
 		>
 			● Connected
+		</div>
+	{:else if connectionState === 'reconnecting'}
+		<div
+			class="rounded-lg border border-yellow-500/20 bg-yellow-500/10 px-4 py-2 text-yellow-200 backdrop-blur-sm"
+		>
+			● Reconnecting...
+		</div>
+	{:else if connectionState === 'connecting'}
+		<div
+			class="rounded-lg border border-blue-500/20 bg-blue-500/10 px-4 py-2 text-blue-200 backdrop-blur-sm"
+		>
+			● Connecting...
 		</div>
 	{:else}
 		<div
@@ -105,7 +122,7 @@
 			{:else}
 				<h1 class="text-xl font-light text-white">Room not found</h1>
 			{/if}
-			<a href="/dashboard" class="text-sm text-neutral-400 transition hover:text-white">
+			<a href={ROUTES.dashboard} class="text-sm text-neutral-400 transition hover:text-white">
 				← Back to Dashboard
 			</a>
 		</div>

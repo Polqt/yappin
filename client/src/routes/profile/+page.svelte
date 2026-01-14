@@ -2,7 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { auth } from '$stores/auth';
 	import { onMount } from 'svelte';
-	import { API_BASE_URL } from '$lib/constants/api';
+	import { ROUTES } from '$lib/constants/api';
+	import { getUserProfile as fetchUserProfile } from '$services/stats';
 	import type { UserProfile } from '$lib/types/user';
 	import StatsCard from '$lib/components/profile/StatsCard.svelte';
 	import ActivityGraph from '$lib/components/profile/ActivityGraph.svelte';
@@ -15,24 +16,16 @@
 
 	onMount(async () => {
 		if (!$auth.user) {
-			goto('/login');
+			goto(ROUTES.login);
 			return;
 		}
 
 		try {
 			loading = true;
-			const response = await fetch(`${API_BASE_URL}/api/stats/profile/${$auth.user.id}`, {
-				credentials: 'include'
-			});
-
-			if (!response.ok) {
-				throw new Error('Failed to load profile');
-			}
-
-			userProfile = await response.json();
+			// Use the stats service instead of direct fetch
+			userProfile = (await fetchUserProfile()) as unknown as UserProfile;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load profile';
-			console.error('Failed to load profile:', err);
 		} finally {
 			loading = false;
 		}
