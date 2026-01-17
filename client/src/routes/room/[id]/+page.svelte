@@ -77,7 +77,7 @@
 </script>
 
 <!-- Connection status indicator -->
-<div class="fixed right-4 top-4 z-50">
+<div class="fixed top-4 right-4 z-50">
 	{#if connectionState === 'connected'}
 		<div
 			class="rounded-lg border border-green-500/20 bg-green-500/10 px-4 py-2 text-green-200 backdrop-blur-sm"
