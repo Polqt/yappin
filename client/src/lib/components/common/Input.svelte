@@ -34,7 +34,7 @@
 			{placeholder}
 			{required}
 			{disabled}
-			class="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-neutral-500 backdrop-blur-sm transition focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 {error
+			class="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-neutral-500 backdrop-blur-sm transition focus:border-white/30 focus:ring-2 focus:ring-white/20 focus:outline-none {error
 				? 'border-red-500/50'
 				: ''}"
 		/>

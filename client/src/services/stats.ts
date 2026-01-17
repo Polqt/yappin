@@ -34,7 +34,6 @@ export interface DailyCheckin {
 	created_at: string;
 }
 
-
 export async function getUserProfile(): Promise<UserProfile> {
 	const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.stats.profile}`, {
 		withCredentials: true
@@ -68,7 +67,6 @@ export async function recordCheckin(): Promise<{ success: boolean; streak: numbe
 	);
 	return response.data;
 }
-
 
 export async function getUserStats(userId: string): Promise<UserStats> {
 	const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.stats.userStats(userId)}`, {

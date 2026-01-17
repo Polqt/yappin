@@ -11,22 +11,22 @@ import (
 )
 
 type TopicsService struct {
-	client *http.Client
+	client      *http.Client
 	redditToken string
 	tokenExpiry time.Time
 }
 
 type Topic struct {
-	Title string
+	Title       string
 	Description string
-	URL string
-	Source string
+	URL         string
+	Source      string
 }
 
 type redditTokenRespose struct {
 	AccessToken string `json:"access_token"`
-	TokenType string `json:"token_type"`
-	ExpiresIn int `json:"expires_in"`
+	TokenType   string `json:"token_type"`
+	ExpiresIn   int    `json:"expires_in"`
 }
 
 func NewTopicsService() *TopicsService {
@@ -37,7 +37,7 @@ func NewTopicsService() *TopicsService {
 	}
 }
 
-func cleanText(text string) string  {
+func cleanText(text string) string {
 	decoded := strings.ReplaceAll(text, "\\n", "\n")
 	return strings.TrimSpace(decoded)
 }
@@ -61,7 +61,7 @@ func (s *TopicsService) GetRedditToken(ctx context.Context) error {
 	req.SetBasicAuth(clientID, clientSecret)
 	req.Header.Set("User-Agent", redditUA)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	
+
 	response, err := s.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to get reddit token: %w", err)
@@ -81,7 +81,7 @@ func (s *TopicsService) GetRedditToken(ctx context.Context) error {
 	s.tokenExpiry = time.Now().Add(time.Duration(tokenResponse.ExpiresIn-60) * time.Second)
 
 	return nil
-} 
+}
 
 // func (s *TopicsService) GetRedditJSON(ctx context.Context, url string, out any) error {
 
@@ -90,7 +90,5 @@ func (s *TopicsService) GetRedditToken(ctx context.Context) error {
 func (s *TopicsService) FetchAllTopics(ctx context.Context) ([]Topic, error) {
 	topics := make([]Topic, 0, 5)
 
-	
 	return topics, nil
 }
-

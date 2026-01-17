@@ -51,19 +51,19 @@
 				<table class="w-full">
 					<thead class="border-b border-white/10 bg-white/5">
 						<tr>
-							<th class="px-6 py-3 text-left text-xs font-medium uppercase text-neutral-400"
+							<th class="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase"
 								>Rank</th
 							>
-							<th class="px-6 py-3 text-left text-xs font-medium uppercase text-neutral-400"
+							<th class="px-6 py-3 text-left text-xs font-medium text-neutral-400 uppercase"
 								>User</th
 							>
-							<th class="px-6 py-3 text-right text-xs font-medium uppercase text-neutral-400"
+							<th class="px-6 py-3 text-right text-xs font-medium text-neutral-400 uppercase"
 								>Messages</th
 							>
-							<th class="px-6 py-3 text-right text-xs font-medium uppercase text-neutral-400"
+							<th class="px-6 py-3 text-right text-xs font-medium text-neutral-400 uppercase"
 								>Upvotes</th
 							>
-							<th class="px-6 py-3 text-right text-xs font-medium uppercase text-neutral-400"
+							<th class="px-6 py-3 text-right text-xs font-medium text-neutral-400 uppercase"
 								>Streak</th
 							>
 						</tr>
@@ -71,20 +71,20 @@
 					<tbody class="divide-y divide-white/10">
 						{#each leaderboard as user}
 							<tr class="transition-colors hover:bg-white/10 {user.rank <= 3 ? 'bg-white/5' : ''}">
-								<td class="whitespace-nowrap px-6 py-4">
+								<td class="px-6 py-4 whitespace-nowrap">
 									<span class="text-2xl">{getMedal(user.rank)}</span>
 									<span class="ml-2 font-medium text-white">#{user.rank}</span>
 								</td>
-								<td class="whitespace-nowrap px-6 py-4 font-medium text-white">
+								<td class="px-6 py-4 font-medium whitespace-nowrap text-white">
 									{user.username}
 								</td>
-								<td class="whitespace-nowrap px-6 py-4 text-right text-neutral-400">
-									{user.total_messaes}
+								<td class="px-6 py-4 text-right whitespace-nowrap text-neutral-400">
+									{user.total_messages}
 								</td>
-								<td class="whitespace-nowrap px-6 py-4 text-right text-neutral-400">
+								<td class="px-6 py-4 text-right whitespace-nowrap text-neutral-400">
 									{user.total_upvotes} 👍
 								</td>
-								<td class="whitespace-nowrap px-6 py-4 text-right text-neutral-400">
+								<td class="px-6 py-4 text-right whitespace-nowrap text-neutral-400">
 									{user.daily_streak} 🔥
 								</td>
 							</tr>

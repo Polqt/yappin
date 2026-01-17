@@ -8,10 +8,10 @@ func SetCookie(w http.ResponseWriter, name, value string, maxAge int) {
 	env := GetEnv("ENVIRONMENT", "development")
 
 	cookie := &http.Cookie{
-		Name: name,
-		Value: value,
-		Path: "/",
-		MaxAge: maxAge,
+		Name:     name,
+		Value:    value,
+		Path:     "/",
+		MaxAge:   maxAge,
 		HttpOnly: true,
 	}
 
@@ -31,12 +31,12 @@ func ClearSecureCookie(w http.ResponseWriter, name string) {
 	env := GetEnv("ENVIRONMENT", "development")
 
 	cookie := &http.Cookie{
-		Name: name,
-		Value: "",
-		Path:  "/",
-		MaxAge: -1,
+		Name:     name,
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
 		HttpOnly: true,
-		Secure: true,
+		Secure:   true,
 	}
 
 	if env == "production" {

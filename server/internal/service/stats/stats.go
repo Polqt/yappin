@@ -15,29 +15,29 @@ type StatsService struct {
 }
 
 type CheckinResult struct {
-	StreakCount int `json:"streak_count"`
-	IsNewCheckin bool `json:"is_new_checkin"`
+	StreakCount     int           `json:"streak_count"`
+	IsNewCheckin    bool          `json:"is_new_checkin"`
 	NewAchievements []Achievement `json:"new_achievements,omitempty"`
 }
 
 type Achievement struct {
-	ID string `json:"id"`
-	Name string `json:"name"`
-	Description string `json:"description"`
-	Icon string `json:"icon"`
-	ThresholdType string `json:"threshold_type"`
-	ThresholdValue int `json:"threshold_value"`
-	EarnedAt string `json:"earned_at"`
+	ID             string `json:"id"`
+	Name           string `json:"name"`
+	Description    string `json:"description"`
+	Icon           string `json:"icon"`
+	ThresholdType  string `json:"threshold_type"`
+	ThresholdValue int    `json:"threshold_value"`
+	EarnedAt       string `json:"earned_at"`
 }
 
 type UserProfile struct {
-	UserID string `db:"user_id"`
-	DailyStreak int `db:"daily_streak"`
-	TotalCheckins int `db:"total_checkins"`
-	TotalMessages int `db:"total_messages"`
-	TotalUpvotes int `db:"total_upvotes"`
-	CanReceiveUpvotes bool `db:"can_receive_upvotes"`
-	Achievements []Achievement `db:"achievements"`
+	UserID            string        `db:"user_id"`
+	DailyStreak       int           `db:"daily_streak"`
+	TotalCheckins     int           `db:"total_checkins"`
+	TotalMessages     int           `db:"total_messages"`
+	TotalUpvotes      int           `db:"total_upvotes"`
+	CanReceiveUpvotes bool          `db:"can_receive_upvotes"`
+	Achievements      []Achievement `db:"achievements"`
 }
 
 func NewStatsService(statsRepository *stats.StatsRepository) *StatsService {
@@ -47,7 +47,7 @@ func NewStatsService(statsRepository *stats.StatsRepository) *StatsService {
 }
 
 func (s *StatsService) ProcessDailyCheckin(ctx context.Context, userID uuid.UUID) (*CheckinResult, error) {
-	
+
 	streakCount, IsNewCheckin, err := s.statsRepository.ProcessDailyCheckin(ctx, userID)
 	if err != nil {
 		log.Printf("ProcessDailyCheckin - Error processing checkin for user %s: %v", userID, err)
@@ -70,8 +70,8 @@ func (s *StatsService) ProcessDailyCheckin(ctx context.Context, userID uuid.UUID
 	}
 
 	return &CheckinResult{
-		StreakCount: streakCount,
-		IsNewCheckin: IsNewCheckin,
+		StreakCount:     streakCount,
+		IsNewCheckin:    IsNewCheckin,
 		NewAchievements: newAchievements,
 	}, nil
 }
@@ -85,13 +85,13 @@ func (s *StatsService) convertAchievement(repositoryAchievements []stats.Achieve
 		}
 
 		achievements = append(achievements, Achievement{
-			ID: ach.ID.String(),
-			Name: ach.Name,
-			Description: ach.Description,
-			Icon: ach.Icon,
-			ThresholdType: ach.ThresholdType,
+			ID:             ach.ID.String(),
+			Name:           ach.Name,
+			Description:    ach.Description,
+			Icon:           ach.Icon,
+			ThresholdType:  ach.ThresholdType,
 			ThresholdValue: ach.ThresholdValue,
-			EarnedAt: earnedAt,
+			EarnedAt:       earnedAt,
 		})
 	}
 	return achievements
@@ -120,13 +120,13 @@ func (s *StatsService) GetUserProfile(ctx context.Context, userID, viewerID uuid
 	}
 
 	return &UserProfile{
-		UserID: userID.String(),
-		DailyStreak: stats.DailyStreak,
-		TotalCheckins: stats.TotalCheckins,
-		TotalMessages: stats.TotalMessages,
-		TotalUpvotes: stats.TotalUpvotes,
+		UserID:            userID.String(),
+		DailyStreak:       stats.DailyStreak,
+		TotalCheckins:     stats.TotalCheckins,
+		TotalMessages:     stats.TotalMessages,
+		TotalUpvotes:      stats.TotalUpvotes,
 		CanReceiveUpvotes: canUpvote,
-		Achievements: s.convertAchievement(achievements),
+		Achievements:      s.convertAchievement(achievements),
 	}, nil
 }
 

@@ -59,14 +59,14 @@ func MigrationReset(db *sql.DB) error {
 
 func MigrationStatus(db *sql.DB) error {
 	goose.SetBaseFS(migrationsFS)
-	
+
 	if err := goose.SetDialect("postgres"); err != nil {
 		return fmt.Errorf("failed to set dialect: %w", err)
 	}
 
 	if err := goose.Status(db, "migrations"); err != nil {
 		return fmt.Errorf("failed to get migration status: %w", err)
-	} 	
+	}
 
 	return nil
 }
