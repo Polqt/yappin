@@ -3,7 +3,7 @@
 	import { auth } from '$stores/auth';
 	import { onMount } from 'svelte';
 	import { ROUTES } from '$lib/constants/api';
-	import { getUserProfile as fetchUserProfile } from '$services/stats';
+	import { getCurrentUserProfile } from '$services/stats';
 	import type { UserProfile } from '$lib/types/user';
 	import StatsCard from '$lib/components/profile/StatsCard.svelte';
 	import ActivityGraph from '$lib/components/profile/ActivityGraph.svelte';
@@ -22,8 +22,7 @@
 
 		try {
 			loading = true;
-			// Use the stats service instead of direct fetch
-			userProfile = (await fetchUserProfile()) as unknown as UserProfile;
+			userProfile = (await getCurrentUserProfile()) as UserProfile;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load profile';
 		} finally {

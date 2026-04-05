@@ -12,11 +12,11 @@
 </script>
 
 {#if users.length > 0}
-	<div class="flex items-center gap-2 px-4 py-2 text-sm text-gray-500">
+	<div class="flex items-center gap-2 px-4 py-2 text-sm text-neutral-400">
 		<div class="flex gap-1">
-			<span class="animate-bounce">•</span>
-			<span class="animate-bounce" style="animation-delay: 0.2s">•</span>
-			<span class="animate-bounce" style="animation-delay: 0.4s">•</span>
+			<span class="animate-bounce">.</span>
+			<span class="animate-bounce" style="animation-delay: 0.2s">.</span>
+			<span class="animate-bounce" style="animation-delay: 0.4s">.</span>
 		</div>
 		<span>{typingText}</span>
 	</div>

@@ -1,25 +1,17 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { API_BASE_URL } from '$lib/constants/api';
+	import { getLeaderboard } from '$services/stats';
 	import type { LeaderboardEntry } from '$lib/types/leaderboard';
 	import { getMedal } from '$lib/utils/leaderboard';
 	import Header from '$lib/components/layout/Header.svelte';
 
-	// Component state
 	let leaderboard: LeaderboardEntry[] = [];
 	let loading = true;
 	let error = '';
 
-	// Fetch leaderboard when component loads
 	onMount(async () => {
 		try {
-			const response = await fetch(`${API_BASE_URL}/api/stats/leaderboard?limit=100`, {
-				credentials: 'include' // Send cookies
-			});
-
-			if (!response.ok) throw new Error('Failed to fetch');
-
-			leaderboard = await response.json();
+			leaderboard = await getLeaderboard(100);
 		} catch (err) {
 			error = 'Failed to load leaderboard';
 			console.error(err);
@@ -33,7 +25,7 @@
 	<Header />
 
 	<div class="mx-auto max-w-6xl p-6 sm:p-8">
-		<h1 class="mb-8 text-center text-2xl font-light text-white">🏆 Leaderboard</h1>
+		<h1 class="mb-8 text-center text-2xl font-light text-white">Leaderboard</h1>
 
 		{#if loading}
 			<div class="py-12 text-center">
@@ -51,21 +43,21 @@
 				<table class="w-full">
 					<thead class="border-b border-white/10 bg-white/5">
 						<tr>
-							<th class="px-6 py-3 text-left text-xs font-medium uppercase text-neutral-400"
-								>Rank</th
-							>
-							<th class="px-6 py-3 text-left text-xs font-medium uppercase text-neutral-400"
-								>User</th
-							>
-							<th class="px-6 py-3 text-right text-xs font-medium uppercase text-neutral-400"
-								>Messages</th
-							>
-							<th class="px-6 py-3 text-right text-xs font-medium uppercase text-neutral-400"
-								>Upvotes</th
-							>
-							<th class="px-6 py-3 text-right text-xs font-medium uppercase text-neutral-400"
-								>Streak</th
-							>
+							<th class="px-6 py-3 text-left text-xs font-medium uppercase text-neutral-400">
+								Rank
+							</th>
+							<th class="px-6 py-3 text-left text-xs font-medium uppercase text-neutral-400">
+								User
+							</th>
+							<th class="px-6 py-3 text-right text-xs font-medium uppercase text-neutral-400">
+								Messages
+							</th>
+							<th class="px-6 py-3 text-right text-xs font-medium uppercase text-neutral-400">
+								Upvotes
+							</th>
+							<th class="px-6 py-3 text-right text-xs font-medium uppercase text-neutral-400">
+								Streak
+							</th>
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-white/10">
@@ -79,13 +71,13 @@
 									{user.username}
 								</td>
 								<td class="whitespace-nowrap px-6 py-4 text-right text-neutral-400">
-									{user.total_messaes}
+									{user.total_messages}
 								</td>
 								<td class="whitespace-nowrap px-6 py-4 text-right text-neutral-400">
-									{user.total_upvotes} 👍
+									{user.total_upvotes}
 								</td>
 								<td class="whitespace-nowrap px-6 py-4 text-right text-neutral-400">
-									{user.daily_streak} 🔥
+									{user.daily_streak}
 								</td>
 							</tr>
 						{/each}

@@ -1,7 +1,6 @@
-import type { Message } from '$lib/types/room';
+import type { Message, NotificationItem, PresenceUser, WebSocketEvent } from '$lib/types/room';
 import { writable } from 'svelte/store';
 import { WS_BASE_URL, API_ENDPOINTS } from '$lib/constants/api';
-import { wsLogger } from '$lib/utils/logger';
 
 type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
 
@@ -9,18 +8,23 @@ interface WebSocketState {
 	connectionState: ConnectionState;
 	connected: boolean;
 	messages: Message[];
+	onlineUsers: PresenceUser[];
+	typingUsers: string[];
+	notifications: NotificationItem[];
 	error: string | null;
 }
 
-// Reconnection configuration
 const MAX_RECONNECT_ATTEMPTS = 5;
-const RECONNECT_DELAY_MS = 3000;
+const RECONNECT_DELAY_MS = 2000;
 
 function createWebSocketStore() {
 	const { subscribe, set, update } = writable<WebSocketState>({
 		connectionState: 'disconnected',
 		connected: false,
 		messages: [],
+		onlineUsers: [],
+		typingUsers: [],
+		notifications: [],
 		error: null
 	});
 
@@ -29,7 +33,7 @@ function createWebSocketStore() {
 	let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 	let currentRoomId: string | null = null;
 	let currentUsername: string | null = null;
-	let currentUserId: string | undefined = undefined;
+	let currentUserId: string | undefined;
 
 	const clearReconnectTimeout = () => {
 		if (reconnectTimeout) {
@@ -39,28 +43,31 @@ function createWebSocketStore() {
 	};
 
 	const connect = (roomId: string, username: string, userId?: string) => {
-		// Store connection params for reconnection
 		currentRoomId = roomId;
 		currentUsername = username;
 		currentUserId = userId;
 		reconnectAttempts = 0;
+		clearReconnectTimeout();
+
+		update((state) => ({
+			...state,
+			messages: [],
+			typingUsers: [],
+			error: null
+		}));
 
 		performConnect(roomId, username, userId);
 	};
 
 	const performConnect = (roomId: string, username: string, userId?: string) => {
-		// Close existing connection if any
 		if (socket && socket.readyState === WebSocket.OPEN) {
-			wsLogger.log('Closing existing WebSocket connection');
 			socket.close();
 		}
 
 		let wsUrl = `${WS_BASE_URL}${API_ENDPOINTS.rooms.join(roomId)}?username=${encodeURIComponent(username)}`;
 		if (userId) {
-			wsUrl += `&client_id=${encodeURIComponent(userId)}`;
+			wsUrl += `&user_id=${encodeURIComponent(userId)}`;
 		}
-
-		wsLogger.log('Connecting to WebSocket:', wsUrl);
 
 		update((state) => ({
 			...state,
@@ -71,7 +78,6 @@ function createWebSocketStore() {
 		socket = new WebSocket(wsUrl);
 
 		socket.onopen = () => {
-			wsLogger.log('WebSocket connected successfully');
 			reconnectAttempts = 0;
 			update((state) => ({
 				...state,
@@ -82,28 +88,24 @@ function createWebSocketStore() {
 		};
 
 		socket.onmessage = (event) => {
-			wsLogger.log('Message received:', event.data);
 			try {
-				const message = JSON.parse(event.data);
+				const payload = JSON.parse(event.data) as WebSocketEvent;
+				update((state) => applyEvent(state, payload));
+			} catch {
 				update((state) => ({
 					...state,
-					messages: [...state.messages, message]
+					error: 'Failed to parse realtime event'
 				}));
-			} catch (error) {
-				wsLogger.error('Error parsing WebSocket message:', error);
 			}
 		};
 
 		socket.onclose = (event) => {
-			wsLogger.log('WebSocket closed. Code:', event.code, 'Reason:', event.reason || 'None');
-
 			update((state) => ({
 				...state,
 				connectionState: 'disconnected',
 				connected: false
 			}));
 
-			// Attempt reconnection if not a clean close and we have connection params
 			if (
 				!event.wasClean &&
 				currentRoomId &&
@@ -112,16 +114,6 @@ function createWebSocketStore() {
 			) {
 				reconnectAttempts++;
 				const delay = RECONNECT_DELAY_MS * reconnectAttempts;
-				wsLogger.log(
-					`Attempting reconnection ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`
-				);
-
-				update((state) => ({
-					...state,
-					connectionState: 'reconnecting',
-					error: `Reconnecting... (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`
-				}));
-
 				reconnectTimeout = setTimeout(() => {
 					if (currentRoomId && currentUsername) {
 						performConnect(currentRoomId, currentUsername, currentUserId);
@@ -130,8 +122,7 @@ function createWebSocketStore() {
 			}
 		};
 
-		socket.onerror = (error) => {
-			wsLogger.error('WebSocket error:', error);
+		socket.onerror = () => {
 			update((state) => ({
 				...state,
 				connected: false,
@@ -145,36 +136,99 @@ function createWebSocketStore() {
 		currentRoomId = null;
 		currentUsername = null;
 		currentUserId = undefined;
-		reconnectAttempts = MAX_RECONNECT_ATTEMPTS; // Prevent auto-reconnect
+		reconnectAttempts = MAX_RECONNECT_ATTEMPTS;
 
 		if (socket) {
 			socket.close();
 			socket = null;
 		}
-		set({ connectionState: 'disconnected', connected: false, messages: [], error: null });
+		set({
+			connectionState: 'disconnected',
+			connected: false,
+			messages: [],
+			onlineUsers: [],
+			typingUsers: [],
+			notifications: [],
+			error: null
+		});
 	};
 
-	const sendMessage = (content: string) => {
-		wsLogger.log('Sending message:', content);
-
-		if (socket?.readyState === WebSocket.OPEN) {
-			socket.send(content);
-			wsLogger.log('Message sent successfully');
-		} else {
-			wsLogger.error('WebSocket is not open. Current state:', socket?.readyState);
-			update((state) => ({
-				...state,
-				error: 'Cannot send message: not connected'
-			}));
+	const sendMessage = (payload: { content: string; channelId?: string; parentMessageId?: string }) => {
+		if (socket?.readyState !== WebSocket.OPEN) {
+			update((state) => ({ ...state, error: 'Cannot send message: not connected' }));
+			return;
 		}
+
+		socket.send(
+			JSON.stringify({
+				type: 'message.send',
+				content: payload.content,
+				channel_id: payload.channelId,
+				parent_message_id: payload.parentMessageId
+			})
+		);
+	};
+
+	const sendTyping = (channelId: string, isTyping: boolean) => {
+		if (socket?.readyState !== WebSocket.OPEN) {
+			return;
+		}
+		socket.send(
+			JSON.stringify({
+				type: 'typing',
+				channel_id: channelId,
+				is_typing: isTyping
+			})
+		);
 	};
 
 	return {
 		subscribe,
 		connect,
 		disconnect,
-		sendMessage
+		sendMessage,
+		sendTyping
 	};
+}
+
+function applyEvent(state: WebSocketState, event: WebSocketEvent): WebSocketState {
+	switch (event.type) {
+		case 'history':
+			return {
+				...state,
+				messages: event.messages ?? []
+			};
+		case 'message.created':
+			return event.message
+				? {
+						...state,
+						messages: [...state.messages.filter((item) => item.id !== event.message?.id), event.message],
+						typingUsers: state.typingUsers.filter((name) => name !== event.message?.username)
+					}
+				: state;
+		case 'typing':
+			if (!event.typing) return state;
+			return {
+				...state,
+				typingUsers: event.typing.is_typing
+					? Array.from(new Set([...state.typingUsers, event.typing.username]))
+					: state.typingUsers.filter((name) => name !== event.typing?.username)
+			};
+		case 'presence':
+			return {
+				...state,
+				onlineUsers: event.presence?.online_users ?? []
+			};
+		case 'notification':
+			return event.notification
+				? {
+						...state,
+						notifications: [event.notification, ...state.notifications]
+					}
+				: state;
+		default:
+			return state;
+	}
 }
 
 export const websocket = createWebSocketStore();

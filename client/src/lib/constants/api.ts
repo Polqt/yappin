@@ -11,13 +11,21 @@ export const API_ENDPOINTS = {
 	rooms: {
 		list: '/api/websoc/get-rooms',
 		create: '/api/websoc/create-room',
-		join: (roomId: string) => `/api/websoc/join-room/${roomId}`
+		detail: (roomId: string) => `/api/websoc/rooms/${roomId}`,
+		search: (roomId: string) => `/api/websoc/rooms/${roomId}/search`,
+		categories: (roomId: string) => `/api/websoc/rooms/${roomId}/categories`,
+		channels: (roomId: string) => `/api/websoc/rooms/${roomId}/channels`,
+		members: (roomId: string, userId: string) => `/api/websoc/rooms/${roomId}/members/${userId}`,
+		join: (roomId: string) => `/api/websoc/join-room/${roomId}`,
+		notifications: '/api/websoc/notifications',
+		markNotificationRead: (notificationId: string) => `/api/websoc/notifications/${notificationId}/read`,
+		reactions: '/api/websoc/reactions'
 	},
 	stats: {
-		profile: '/api/users/profile',
+		profile: (userId: string) => `/api/stats/profile/${userId}`,
 		leaderboard: '/api/stats/leaderboard',
 		checkin: '/api/stats/checkin',
-		userStats: (userId: string) => `/api/stats/user/${userId}`
+		upvote: '/api/stats/upvote'
 	}
 } as const;
 
