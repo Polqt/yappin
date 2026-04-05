@@ -16,6 +16,7 @@ import (
 	"chat-application/db/migrations"
 
 	userHandler "chat-application/internal/api/handler/user"
+	"chat-application/internal/config"
 	"chat-application/internal/constants"
 	roomRepository "chat-application/internal/repo/room"
 	userRepo "chat-application/internal/repo/user"
@@ -35,6 +36,11 @@ import (
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("Error loading .env file")
+	}
+
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
 	}
 
 	dbConn, err := db.NewDatabase()
@@ -66,7 +72,7 @@ func main() {
 	statsHandler := statsHandler.NewStatsHandler(statsService)
 
 	pinnedRoomService := pinnedRooms.NewPinnedRoomsService(dbConn, webService)
-	if err := pinnedRoomService.RefreshPinnedRooms(context.Background()); err != nil {
+	if err := pinnedRoomService.CheckAndRefreshPinnedRooms(context.Background()); err != nil {
 		log.Printf("Failed to refresh pinned rooms: %v", err)
 	}
 
@@ -81,7 +87,7 @@ func main() {
 
 	// Create server with graceful shutdown support
 	srv := &http.Server{
-		Addr:         ":8080",
+		Addr:         ":" + cfg.ServerPort,
 		Handler:      routerWithLimiter,
 		ReadTimeout:  constants.HTTPServerTimeout,
 		WriteTimeout: constants.HTTPServerTimeout,
@@ -90,7 +96,7 @@ func main() {
 
 	// Start server in goroutine
 	go func() {
-		log.Println("Server starting on :8080")
+		log.Printf("Server starting on :%s", cfg.ServerPort)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Failed to start server: %v", err)
 		}

@@ -25,12 +25,12 @@ type JWTClaims struct {
 
 // UserService handles user-related business logic.
 type UserService struct {
-	userRepo *repository.UserRepository
+	userRepo repository.UserRepositoryInterface
 	timeout  time.Duration
 }
 
 // NewUserService creates a new UserService instance.
-func NewUserService(userRepo *repository.UserRepository) *UserService {
+func NewUserService(userRepo repository.UserRepositoryInterface) *UserService {
 	return &UserService{
 		userRepo: userRepo,
 		timeout:  constants.DefaultServiceTimeout,
@@ -115,6 +115,7 @@ func (s *UserService) CreateUser(ctx context.Context, req model.RequestCreateUse
 		AccessToken: ss,
 		Username:    user.Username,
 		ID:          user.ID.String(),
+		Email:       user.Email,
 	}, nil
 }
 
@@ -168,7 +169,12 @@ func (s *UserService) Login(ctx context.Context, req model.RequestLoginUser) (*m
 	}
 
 	log.Printf("UserService.Login - Login successful for user: %s (%s)", user.ID.String(), user.Username)
-	return &model.ResponseLoginUser{AccessToken: ss, Username: user.Username, ID: user.ID.String()}, nil
+	return &model.ResponseLoginUser{
+		AccessToken: ss,
+		Username:    user.Username,
+		ID:          user.ID.String(),
+		Email:       user.Email,
+	}, nil
 }
 
 func (s *UserService) GetUserByID(ctx context.Context, id uuid.UUID) (*repository.User, error) {
@@ -196,5 +202,6 @@ func (s *UserService) UpdateUsername(ctx context.Context, userID string, newUser
 	return &model.ResponseLoginUser{
 		ID:       user.ID.String(),
 		Username: user.Username,
+		Email:    user.Email,
 	}, nil
 }

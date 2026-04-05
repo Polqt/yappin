@@ -17,4 +17,5 @@ type ResponseLoginUser struct {
 	AccessToken string `json:"access_token,omitempty"`
 	ID          string `json:"id"`
 	Username    string `json:"username"`
+	Email       string `json:"email,omitempty"`
 }

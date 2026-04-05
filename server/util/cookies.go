@@ -6,17 +6,20 @@ import (
 
 func SetCookie(w http.ResponseWriter, name, value string, maxAge int) {
 	env := GetEnv("ENVIRONMENT", "development")
+	cookieDomain := GetEnv("COOKIE_DOMAIN", "")
 
 	cookie := &http.Cookie{
-		Name: name,
-		Value: value,
-		Path: "/",
-		MaxAge: maxAge,
+		Name:     name,
+		Value:    value,
+		Path:     "/",
+		MaxAge:   maxAge,
 		HttpOnly: true,
 	}
 
 	if env == "production" {
-		cookie.Domain = "yappin.chat"
+		if cookieDomain != "" {
+			cookie.Domain = cookieDomain
+		}
 		cookie.Secure = true
 		cookie.SameSite = http.SameSiteNoneMode
 	} else {
@@ -29,18 +32,20 @@ func SetCookie(w http.ResponseWriter, name, value string, maxAge int) {
 
 func ClearSecureCookie(w http.ResponseWriter, name string) {
 	env := GetEnv("ENVIRONMENT", "development")
+	cookieDomain := GetEnv("COOKIE_DOMAIN", "")
 
 	cookie := &http.Cookie{
-		Name: name,
-		Value: "",
-		Path:  "/",
-		MaxAge: -1,
+		Name:     name,
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
 		HttpOnly: true,
-		Secure: true,
 	}
 
 	if env == "production" {
-		cookie.Domain = "yappin.chat"
+		if cookieDomain != "" {
+			cookie.Domain = cookieDomain
+		}
 		cookie.Secure = true
 		cookie.SameSite = http.SameSiteNoneMode
 	} else {

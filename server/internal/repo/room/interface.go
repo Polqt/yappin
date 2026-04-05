@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 
 	"chat-application/internal/api/model"
 
@@ -11,6 +12,9 @@ import (
 type RoomRepositoryInterface interface {
 	// CreateRoom creates a new chat room in the database.
 	CreateRoom(ctx context.Context, room *Room) (*Room, error)
+
+	// GetDB returns the underlying database connection when direct queries are needed.
+	GetDB() *sql.DB
 
 	// GetRoomByID retrieves a room by its unique identifier.
 	// Returns nil, nil if the room is not found.
@@ -39,6 +43,22 @@ type RoomRepositoryInterface interface {
 
 	// GetReactions retrieves all reactions for a message.
 	GetReactions(ctx context.Context, messageID string) ([]model.MessageReaction, error)
+
+	EnsureRoomMembership(ctx context.Context, roomID, userID uuid.UUID) error
+	GetRoomMember(ctx context.Context, roomID, userID uuid.UUID) (*RoomMember, error)
+	GetRoomMembers(ctx context.Context, roomID uuid.UUID) ([]RoomMember, error)
+	UpdateRoomMember(ctx context.Context, member RoomMember) error
+	CreateCategory(ctx context.Context, category *RoomCategory) (*RoomCategory, error)
+	CreateChannel(ctx context.Context, channel *RoomChannel) (*RoomChannel, error)
+	GetRoomCategories(ctx context.Context, roomID uuid.UUID) ([]RoomCategory, error)
+	GetRoomChannels(ctx context.Context, roomID uuid.UUID) ([]RoomChannel, error)
+	GetDefaultChannel(ctx context.Context, roomID uuid.UUID) (*RoomChannel, error)
+	GetRoomMessagesByChannel(ctx context.Context, roomID uuid.UUID, channelID *uuid.UUID, limit int, offset int) ([]*Message, error)
+	SearchMessages(ctx context.Context, roomID uuid.UUID, queryText string, channelID *uuid.UUID, username string, limit int) ([]Message, error)
+	CreateNotification(ctx context.Context, notification *Notification) error
+	GetNotifications(ctx context.Context, userID uuid.UUID, limit int) ([]Notification, error)
+	MarkNotificationRead(ctx context.Context, notificationID, userID uuid.UUID) error
+	CreateMentionNotifications(ctx context.Context, roomID uuid.UUID, message *Message) ([]Notification, error)
 }
 
 // Ensure RoomRepository implements RoomRepositoryInterface

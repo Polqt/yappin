@@ -26,13 +26,16 @@ type Room struct {
 }
 
 type Message struct {
-	ID        uuid.UUID  `json:"id"`
-	RoomID    uuid.UUID  `json:"room_id"`
-	UserID    *uuid.UUID `json:"user_id,omitempty"`
-	Username  string     `json:"username"`
-	Content   string     `json:"content"`
-	IsSystem  bool       `json:"is_system"`
-	CreatedAt time.Time  `json:"created_at"`
+	ID              uuid.UUID  `json:"id"`
+	RoomID          uuid.UUID  `json:"room_id"`
+	ChannelID       *uuid.UUID `json:"channel_id,omitempty"`
+	ParentMessageID *uuid.UUID `json:"parent_message_id,omitempty"`
+	UserID          *uuid.UUID `json:"user_id,omitempty"`
+	Username        string     `json:"username"`
+	Content         string     `json:"content"`
+	IsSystem        bool       `json:"is_system"`
+	Metadata        []byte     `json:"metadata,omitempty"`
+	CreatedAt       time.Time  `json:"created_at"`
 }
 
 type RoomRepository struct {
@@ -153,7 +156,7 @@ func (r *RoomRepository) GetAllActiveRooms(ctx context.Context) ([]*Room, error)
 			topic_title, topic_description, topic_url, topic_source, topic_updated_at
 		FROM rooms
 		WHERE expires_at > NOW()
-		ORDER BY created_at DESC, is_pinned DESC
+		ORDER BY is_pinned DESC, created_at DESC
 	`
 
 	rows, err := r.db.QueryContext(ctx, query)
@@ -193,18 +196,21 @@ func (r *RoomRepository) GetAllActiveRooms(ctx context.Context) ([]*Room, error)
 
 func (r *RoomRepository) CreateMessage(ctx context.Context, message *Message) (*Message, error) {
 	query := `
-		INSERT INTO messages (room_id, user_id, username, content, is_system)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO messages (room_id, channel_id, parent_message_id, user_id, username, content, is_system, metadata)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id, created_at
 	`
 
 	err := r.db.QueryRowContext(
 		ctx, query,
 		message.RoomID,
+		message.ChannelID,
+		message.ParentMessageID,
 		message.UserID,
 		message.Username,
 		message.Content,
 		message.IsSystem,
+		message.Metadata,
 	).Scan(
 		&message.ID,
 		&message.CreatedAt,
@@ -219,7 +225,7 @@ func (r *RoomRepository) CreateMessage(ctx context.Context, message *Message) (*
 
 func (r *RoomRepository) GetRoomMessages(ctx context.Context, roomID uuid.UUID, limit int, offset int) ([]*Message, error) {
 	query := `
-		SELECT m.id, m.room_id, m.user_id, m.username, m.content, m.is_system, m.created_at
+		SELECT m.id, m.room_id, m.user_id, m.username, m.content, m.is_system, m.created_at, m.channel_id, m.parent_message_id, m.metadata
 		FROM messages AS m
 		INNER JOIN rooms AS r ON m.room_id = r.id
 		WHERE r.id = $1
@@ -244,6 +250,9 @@ func (r *RoomRepository) GetRoomMessages(ctx context.Context, roomID uuid.UUID, 
 			&msg.Content,
 			&msg.IsSystem,
 			&msg.CreatedAt,
+			&msg.ChannelID,
+			&msg.ParentMessageID,
+			&msg.Metadata,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan message: %w", err)
