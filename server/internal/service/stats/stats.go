@@ -31,13 +31,22 @@ type Achievement struct {
 }
 
 type UserProfile struct {
-	UserID            string        `db:"user_id"`
-	DailyStreak       int           `db:"daily_streak"`
-	TotalCheckins     int           `db:"total_checkins"`
-	TotalMessages     int           `db:"total_messages"`
-	TotalUpvotes      int           `db:"total_upvotes"`
-	CanReceiveUpvotes bool          `db:"can_receive_upvotes"`
-	Achievements      []Achievement `db:"achievements"`
+	UserID            string        `json:"user_id" db:"user_id"`
+	DailyStreak       int           `json:"daily_streak" db:"daily_streak"`
+	TotalCheckins     int           `json:"total_checkins" db:"total_checkins"`
+	TotalMessages     int           `json:"total_messages" db:"total_messages"`
+	TotalUpvotes      int           `json:"total_upvotes" db:"total_upvotes"`
+	CanReceiveUpvotes bool          `json:"can_receive_upvotes" db:"can_receive_upvotes"`
+	Achievements      []Achievement `json:"achievements" db:"achievements"`
+}
+
+type LeaderboardEntry struct {
+	UserID        string `json:"user_id"`
+	Username      string `json:"username"`
+	TotalMessages int    `json:"total_messages"`
+	TotalUpvotes  int    `json:"total_upvotes"`
+	DailyStreak   int    `json:"daily_streak"`
+	Rank          int    `json:"rank"`
 }
 
 func NewStatsService(statsRepository *stats.StatsRepository) *StatsService {
@@ -163,4 +172,25 @@ func (s *StatsService) GivenUpvote(ctx context.Context, fromUserID, toUserID uui
 
 	log.Printf("GivenUpvote - Upvote successfully given from user %s to user %s", fromUserID, toUserID)
 	return nil
+}
+
+func (s *StatsService) GetLeaderboard(ctx context.Context, limit int) ([]LeaderboardEntry, error) {
+	entries, err := s.statsRepository.GetLeaderboard(ctx, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve leaderboard: %w", err)
+	}
+
+	leaderboard := make([]LeaderboardEntry, 0, len(entries))
+	for _, entry := range entries {
+		leaderboard = append(leaderboard, LeaderboardEntry{
+			UserID:        entry.UserID,
+			Username:      entry.Username,
+			TotalMessages: entry.TotalMessages,
+			TotalUpvotes:  entry.TotalUpvotes,
+			DailyStreak:   entry.DailyStreak,
+			Rank:          entry.Rank,
+		})
+	}
+
+	return leaderboard, nil
 }

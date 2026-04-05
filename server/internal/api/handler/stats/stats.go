@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 
 	"chat-application/internal/middleware"
 	statsService "chat-application/internal/service/stats"
@@ -119,4 +120,28 @@ func (h *StatsHandler) GivenUpvote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	util.WriteJSONResponse(w, http.StatusOK, map[string]string{"status": "upvote given successfully"})
+}
+
+func (h *StatsHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
+	limit := 10
+	if limitParam := r.URL.Query().Get("limit"); limitParam != "" {
+		parsedLimit, err := strconv.Atoi(limitParam)
+		if err != nil || parsedLimit <= 0 {
+			util.WriteErrorResponse(w, http.StatusBadRequest, "invalid limit")
+			return
+		}
+		if parsedLimit > 100 {
+			parsedLimit = 100
+		}
+		limit = parsedLimit
+	}
+
+	leaderboard, err := h.statsService.GetLeaderboard(r.Context(), limit)
+	if err != nil {
+		log.Printf("Error retrieving leaderboard: %v", err)
+		util.WriteErrorResponse(w, http.StatusInternalServerError, "failed to retrieve leaderboard")
+		return
+	}
+
+	util.WriteJSONResponse(w, http.StatusOK, leaderboard)
 }

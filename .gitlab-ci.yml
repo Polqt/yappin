@@ -1,0 +1,31 @@
+stages:
+  - lint
+  - test
+  - build
+
+variables:
+  GO_VERSION: "1.24"
+  NODE_VERSION: "22"
+
+go_test:
+  stage: test
+  image: golang:${GO_VERSION}
+  script:
+    - cd server
+    - go test ./...
+
+client_check:
+  stage: lint
+  image: node:${NODE_VERSION}
+  script:
+    - cd client
+    - npm ci
+    - npm run check
+
+client_build:
+  stage: build
+  image: node:${NODE_VERSION}
+  script:
+    - cd client
+    - npm ci
+    - npm run build

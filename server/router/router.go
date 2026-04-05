@@ -12,10 +12,17 @@ import (
 	statsHandler "chat-application/internal/api/handler/stats"
 	userHandler "chat-application/internal/api/handler/user"
 	authMiddleware "chat-application/internal/middleware"
+	"chat-application/util"
 )
 
 func SetupRoutes(userHandler *userHandler.UserHandler, coreHandler *coreHandler.CoreHandler, statsHandler *statsHandler.StatsHandler) http.Handler {
 	r := chi.NewRouter()
+	allowedOrigins := util.GetEnvList("ALLOWED_ORIGINS", []string{
+		"http://localhost:3000",
+		"http://localhost:5173",
+		"http://localhost:5174",
+		"https://yappin.chat",
+	})
 
 	r.Use(authMiddleware.SecurityHeaders)
 	r.Use(authMiddleware.RequestSizeLimit(1 << 20))
@@ -26,7 +33,7 @@ func SetupRoutes(userHandler *userHandler.UserHandler, coreHandler *coreHandler.
 	r.Use(authMiddleware.Timeout(30 * time.Second))
 
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:5173", "http://localhost:5174", "https://yappin.chat"},
+		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
@@ -59,12 +66,10 @@ func SetupRoutes(userHandler *userHandler.UserHandler, coreHandler *coreHandler.
 				r.Use(authMiddleware.JWTAuth)
 				r.Post("/checkin", statsHandler.CheckIn)
 				r.Post("/upvote", statsHandler.GivenUpvote)
-			})
-
-			s.Group(func(r chi.Router) {
-				r.Use(authMiddleware.JWTAuth)
 				r.Get("/profile/{userID}", statsHandler.GetUserProfile)
 			})
+
+			s.Get("/leaderboard", statsHandler.GetLeaderboard)
 		})
 
 		api.Route("/websoc", func(u chi.Router) {
@@ -76,11 +81,18 @@ func SetupRoutes(userHandler *userHandler.UserHandler, coreHandler *coreHandler.
 			})
 
 			u.With(authMiddleware.JWTAuth).Post("/reactions", coreHandler.AddReaction)
+			u.With(authMiddleware.JWTAuth).Get("/notifications", coreHandler.GetNotifications)
+			u.With(authMiddleware.JWTAuth).Put("/notifications/{notificationId}/read", coreHandler.MarkNotificationRead)
 			u.Get("/reactions/{messageID}", coreHandler.GetReactions)
 
-			u.Get("/join-room/{roomId}", coreHandler.JoinRoom)
+			u.With(authMiddleware.OptionalJWTAuth).Get("/join-room/{roomId}", coreHandler.JoinRoom)
 			u.Get("/get-rooms", coreHandler.GetRooms)
-			u.Get("/get-clients", coreHandler.GetClients)
+			u.Get("/rooms/{roomId}", coreHandler.GetRoomDetail)
+			u.Get("/rooms/{roomId}/search", coreHandler.SearchMessages)
+			u.With(authMiddleware.JWTAuth).Post("/rooms/{roomId}/categories", coreHandler.CreateCategory)
+			u.With(authMiddleware.JWTAuth).Post("/rooms/{roomId}/channels", coreHandler.CreateChannel)
+			u.With(authMiddleware.JWTAuth).Put("/rooms/{roomId}/members/{userId}", coreHandler.UpdateMemberRole)
+			u.Get("/clients/{room_id}", coreHandler.GetClients)
 		})
 	})
 

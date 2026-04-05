@@ -129,6 +129,7 @@ func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	response := model.ResponseLoginUser{
 		ID:       user.ID.String(),
 		Username: user.Username,
+		Email:    user.Email,
 	}
 
 	util.WriteJSONResponse(w, http.StatusOK, response)
