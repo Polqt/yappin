@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 )
+
 type StatsRepositoryInterface interface {
 	// GetOrCreateUserStats retrieves or creates user statistics.
 	GetOrCreateUserStats(ctx context.Context, userID uuid.UUID) (*UserStats, error)

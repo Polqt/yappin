@@ -2,7 +2,7 @@ export interface User {
 	id: string;
 	username: string;
 	email?: string;
-	AccessToken?: string; 
+	AccessToken?: string;
 }
 
 export interface LoginCredentials {
